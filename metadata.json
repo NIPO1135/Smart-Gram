@@ -1,0 +1,8 @@
+{
+  "name": "Smart Village (স্মার্ট গ্রাম)",
+  "description": "A comprehensive bilingual (Bengali & English) platform for village community services including emergency aid, agriculture, education, and local commerce.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}
