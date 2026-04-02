@@ -2,6 +2,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Milk, Egg, MessageCircle } from 'lucide-react';
+import { useAppConfig, PopularProductIconKey } from '../context/AppConfigContext';
 
 interface Product {
   id: string;
@@ -57,33 +58,23 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
 const PopularProducts: React.FC = () => {
   const { t } = useLanguage();
+  const { config, } = useAppConfig();
 
-  const products: Product[] = [
-    {
-      id: 'milk',
-      name: t.milk,
-      icon: Milk,
-      color: 'bg-blue-50 text-blue-500',
-      price: '৮০',
-      unit: t.priceUnitLitre
-    },
-    {
-      id: 'chicken-eggs',
-      name: t.chickenEggs,
-      icon: Egg,
-      color: 'bg-amber-50 text-amber-500',
-      price: '৬০',
-      unit: t.priceUnitHali
-    },
-    {
-      id: 'duck-eggs',
-      name: t.duckEggs,
-      icon: Egg,
-      color: 'bg-orange-50 text-orange-500',
-      price: '৭০',
-      unit: t.priceUnitHali
-    }
-  ];
+  const ICONS: Record<PopularProductIconKey, React.ElementType> = {
+    Milk,
+    Egg,
+  };
+
+  const products: Product[] = config.popularProducts
+    .filter((p) => p.enabled)
+    .map((p) => ({
+      id: p.id,
+      name: t[p.id as keyof typeof t] ?? (p.name.en || p.name.bn),
+      icon: ICONS[p.iconKey],
+      color: p.color,
+      price: p.price,
+      unit: p.unit.en || p.unit.bn,
+    }));
 
   return (
     <div className="mt-6 mb-4 px-1 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +6,10 @@ import { Phone, Lock, LogIn, UserPlus } from 'lucide-react';
 const LoginPage: React.FC<{ onNavigate: (page: 'login' | 'register') => void }> = ({ onNavigate }) => {
   const { t } = useLanguage();
   const { login, isLoading, error } = useAuth();
-  const [formData, setFormData] = useState({ phone: '', password: '' });
+  const [formData, setFormData] = useState({
+    phone: '',
+    password: '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ const LoginPage: React.FC<{ onNavigate: (page: 'login' | 'register') => void }> 
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl shadow-green-900/5 rounded-2xl sm:px-10 border border-green-50">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
                 <p className="text-red-700 text-sm">{error}</p>
@@ -43,7 +45,7 @@ const LoginPage: React.FC<{ onNavigate: (page: 'login' | 'register') => void }> 
                 <input
                   type="tel"
                   required
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="017XXXXXXXX"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -60,7 +62,7 @@ const LoginPage: React.FC<{ onNavigate: (page: 'login' | 'register') => void }> 
                 <input
                   type="password"
                   required
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   placeholder="••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}

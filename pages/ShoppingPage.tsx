@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { 
+import {
   ArrowLeft, 
   ShoppingBag, 
   MessageCircle, 
@@ -12,51 +12,28 @@ import {
   Package,
   ShoppingBasket
 } from 'lucide-react';
+import { useAppConfig } from '../context/AppConfigContext';
 
 type ShopSubView = 'selection' | 'handmade';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  unit: string;
-  image: string;
-}
 
 const ShoppingPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
   const [subView, setSubView] = useState<ShopSubView>('selection');
+  const { config } = useAppConfig();
 
-  const handmadeProducts: Product[] = [
-    {
-      id: 'h1',
-      name: language === 'bn' ? 'খাঁটি ঘি' : 'Pure Ghee',
-      price: 1200,
-      unit: t.perKg,
-      image: 'https://images.unsplash.com/photo-1589927986089-35812388d1f4?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'h2',
-      name: language === 'bn' ? 'নকশী কাঁথা' : 'Nokshi Kantha',
-      price: 2500,
-      unit: t.perPiece,
-      image: 'https://images.unsplash.com/photo-1621466561450-4840ce335a73?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'h3',
-      name: language === 'bn' ? 'মাটির কলসি' : 'Earthen Pitcher',
-      price: 350,
-      unit: t.perPiece,
-      image: 'https://images.unsplash.com/photo-1590422443834-3112c8200676?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: 'h4',
-      name: language === 'bn' ? 'তালের পাখা' : 'Palm Leaf Fan',
-      price: 50,
-      unit: t.perPiece,
-      image: 'https://images.unsplash.com/photo-1620163351988-1216a6741703?auto=format&fit=crop&w=300&q=80'
-    }
-  ];
+  const handmadeProducts = useMemo(
+    () =>
+      config.handmadeProducts
+        .filter((p) => p.enabled)
+        .map((p) => ({
+          id: p.id,
+          name: language === 'bn' ? p.name.bn : p.name.en,
+          price: p.price,
+          unit: language === 'bn' ? p.unit.bn : p.unit.en,
+          image: p.image,
+        })),
+    [config.handmadeProducts, language],
+  );
 
   const handleWhatsAppOrder = (productName: string) => {
     const whatsappNumber = "8801700000000"; 

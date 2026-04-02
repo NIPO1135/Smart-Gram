@@ -2,25 +2,22 @@
 import React, { useState } from 'react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AppConfigProvider } from './context/AppConfigContext';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import Dashboard from './pages/Dashboard';
-import Community from './pages/Community';
 import Profile from './pages/Profile';
 import EmergencyPage from './pages/EmergencyPage';
 import AgriServicePage from './pages/AgriServicePage';
-import EducationYouthPage from './pages/EducationYouthPage';
 import ShoppingPage from './pages/ShoppingPage';
 import BloodBankPage from './pages/BloodBankPage';
-import SportsPage from './pages/SportsPage';
-import SharingMarketPage from './pages/SharingMarketPage';
-import TalentHubPage from './pages/TalentHubPage';
+import AdminPanel from './pages/AdminPanel';
 
-type AppTab = 'home' | 'community' | 'profile';
-type AppView = 'dashboard' | 'emergency' | 'agriculture' | 'education' | 'shopping' | 'blood' | 'sports' | 'sharingMarket' | 'talentHub';
+type AppTab = 'home' | 'profile';
+type AppView = 'dashboard' | 'emergency' | 'agriculture' | 'shopping' | 'blood' | 'admin';
 
 const Main: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -40,19 +37,26 @@ const Main: React.FC = () => {
   }
 
   const renderAuthenticatedContent = () => {
+    if (currentView === 'admin') {
+      return (
+        <AdminPanel
+          onBack={() => {
+            setActiveTab('home');
+            setCurrentView('dashboard');
+          }}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'home': 
         if (currentView === 'emergency') return <EmergencyPage onBack={() => setCurrentView('dashboard')} />;
         if (currentView === 'agriculture') return <AgriServicePage onBack={() => setCurrentView('dashboard')} />;
-        if (currentView === 'education') return <EducationYouthPage onBack={() => setCurrentView('dashboard')} />;
         if (currentView === 'shopping') return <ShoppingPage onBack={() => setCurrentView('dashboard')} />;
         if (currentView === 'blood') return <BloodBankPage onBack={() => setCurrentView('dashboard')} />;
-        if (currentView === 'sports') return <SportsPage onBack={() => setCurrentView('dashboard')} />;
-        if (currentView === 'sharingMarket') return <SharingMarketPage onBack={() => setCurrentView('dashboard')} />;
-        if (currentView === 'talentHub') return <TalentHubPage onBack={() => setCurrentView('dashboard')} />;
         return <Dashboard onViewChange={(view) => setCurrentView(view as AppView)} />;
-      case 'community': return <Community />;
-      case 'profile': return <Profile />;
+      case 'profile':
+        return <Profile onOpenAdmin={() => setCurrentView('admin')} />;
       default: return <Dashboard />;
     }
   };
@@ -105,7 +109,9 @@ const App: React.FC = () => {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <Main />
+        <AppConfigProvider>
+          <Main />
+        </AppConfigProvider>
       </AuthProvider>
     </LanguageProvider>
   );

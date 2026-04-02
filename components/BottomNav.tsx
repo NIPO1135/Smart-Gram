@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { Home, Users, User } from 'lucide-react';
+import { Home, User } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 interface BottomNavProps {
-  activeTab: 'home' | 'community' | 'profile';
-  setActiveTab: (tab: 'home' | 'community' | 'profile') => void;
+  activeTab: 'home' | 'profile';
+  setActiveTab: (tab: 'home' | 'profile') => void;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
@@ -13,7 +13,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
 
   const tabs = [
     { id: 'home', label: t.navHome, icon: Home },
-    { id: 'community', label: t.navCommunity, icon: Users },
     { id: 'profile', label: t.navProfile, icon: User },
   ] as const;
 

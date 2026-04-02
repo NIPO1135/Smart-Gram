@@ -1,15 +1,13 @@
 
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import { BellRing } from 'lucide-react';
 
 const NoticeBoard: React.FC = () => {
   const { t, language } = useLanguage();
-
-  // Simulated notices
-  const notices = language === 'bn' 
-    ? "গ্রামের সরকারি হাসপাতালে আগামী শুক্রবার বিনামূল্যে রক্ত পরীক্ষা করা হবে। | নতুন সার ভর্তুকির জন্য ইউনিয়ন পরিষদে যোগাযোগ করুন। | খেলাধুলা ক্লাবের পক্ষ থেকে আগামী রোববার ফুটবল টুনামেন্ট আয়োজন করা হবে।"
-    : "Free blood checkups at the village government hospital next Friday. | Contact Union Parishad for new fertilizer subsidies. | Football tournament organized by the Sports Club this Sunday.";
+  const { config } = useAppConfig();
+  const notices = language === 'bn' ? config.notices.bn : config.notices.en;
 
   return (
     <div className="bg-white border-y border-green-100 py-2.5 flex items-center overflow-hidden">

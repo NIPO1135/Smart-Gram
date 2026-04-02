@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig, EmergencyCategoryConfig, EmergencyIconKey } from '../context/AppConfigContext';
 import { 
   Phone, 
   Search, 
@@ -12,106 +13,53 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-interface Contact {
-  name: string;
-  phone: string;
-  description: string;
-}
-
-interface Category {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  color: string;
-  contacts: Contact[];
-}
-
 const EmergencyPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
+  const { config } = useAppConfig();
 
-  const emergencyData: Category[] = [
-    {
-      id: 'ambulance',
-      title: t.catAmbulance,
-      icon: Siren,
-      color: 'bg-red-500',
-      contacts: [
-        { 
-          name: language === 'bn' ? "রফিক অ্যাম্বুলেন্স" : "Rafiq Ambulance", 
-          phone: "01700000001", 
-          description: language === 'bn' ? "২৪/৭ অক্সিজেন সুবিধা" : "24/7 Oxygen Available" 
-        },
-        { 
-          name: language === 'bn' ? "আল-শিফা সার্ভিস" : "Al-Shifa Service", 
-          phone: "01700000002", 
-          description: language === 'bn' ? "গ্রামের প্রধান হাসপাতাল" : "Village Hospital Main" 
-        }
-      ]
-    },
-    {
-      id: 'doctor',
-      title: t.catDoctor,
-      icon: Stethoscope,
-      color: 'bg-blue-500',
-      contacts: [
-        { 
-          name: language === 'bn' ? "উপজেলা স্বাস্থ্য কমপ্লেক্স" : "Upazila Health Complex", 
-          phone: "01700000003", 
-          description: language === 'bn' ? "জরুরী বিভাগ" : "Emergency Wing" 
-        },
-        { 
-          name: language === 'bn' ? "ডা. সেলিম উদ্দিন" : "Dr. Selim Uddin", 
-          phone: "01700000004", 
-          description: language === 'bn' ? "মেডিক্যাল অফিসার" : "Medical Officer" 
-        }
-      ]
-    },
-    {
-      id: 'fire',
-      title: t.catFirePolice,
-      icon: Flame,
-      color: 'bg-orange-600',
-      contacts: [
-        { 
-          name: language === 'bn' ? "ফায়ার সার্ভিস স্টেশন" : "Fire Service Station", 
-          phone: "01700000005", 
-          description: language === 'bn' ? "স্থানীয় সদরদপ্তর" : "Local HQ" 
-        },
-        { 
-          name: language === 'bn' ? "পুলিশ স্টেশন (থানা)" : "Police Station (Thana)", 
-          phone: "01700000006", 
-          description: language === 'bn' ? "ডিউটি অফিসার" : "Duty Officer" 
-        }
-      ]
-    },
-    {
-      id: 'electricity',
-      title: t.catElectricity,
-      icon: Zap,
-      color: 'bg-yellow-600',
-      contacts: [
-        { 
-          name: language === 'bn' ? "পল্লী বিদ্যুৎ অফিস" : "Palli Bidyut Office", 
-          phone: "01700000007", 
-          description: language === 'bn' ? "অভিযোগ কেন্দ্র" : "Complaint Center" 
-        }
-      ]
-    },
-    {
-      id: 'animal',
-      title: t.catAnimalDoctor,
-      icon: Dog,
-      color: 'bg-green-600',
-      contacts: [
-        { 
-          name: language === 'bn' ? "ডা. করিম (পশু চিকিৎসক)" : "Dr. Karim (Vet Doctor)", 
-          phone: "01700000008", 
-          description: language === 'bn' ? "গবাদি পশু বিশেষজ্ঞ" : "Livestock Specialist" 
-        }
-      ]
-    }
-  ];
+  const ICONS: Record<EmergencyIconKey, React.ElementType> = {
+    Siren,
+    Stethoscope,
+    Flame,
+    Zap,
+    Dog,
+  };
+
+  const TITLE_KEYS: Record<EmergencyCategoryConfig['id'], keyof typeof t> = {
+    ambulance: 'catAmbulance',
+    doctor: 'catDoctor',
+    fire: 'catFirePolice',
+    electricity: 'catElectricity',
+    animal: 'catAnimalDoctor',
+  };
+
+  const emergencyData = useMemo(() => {
+    return config.emergencyCategories
+      .filter(cat => cat.enabled)
+      .map(cat => {
+        const titleKey = TITLE_KEYS[cat.id];
+        const defaultTitle = (t as any)[titleKey] as string;
+        const overrideTitle = language === 'bn' ? cat.titleOverride?.bn : cat.titleOverride?.en;
+        const title = overrideTitle && overrideTitle.trim() ? overrideTitle : defaultTitle;
+
+        return {
+          id: cat.id,
+          title,
+          icon: ICONS[cat.iconKey],
+          color: cat.color,
+          contacts: cat.contacts.map(contact => {
+            const name = language === 'bn' ? contact.name.bn : contact.name.en;
+            const description = language === 'bn' ? contact.description.bn : contact.description.en;
+            return {
+              name,
+              description,
+              phone: contact.phone,
+            };
+          }),
+        };
+      });
+  }, [config.emergencyCategories, ICONS, TITLE_KEYS, language, t]);
 
   const filteredData = emergencyData.map(cat => ({
     ...cat,

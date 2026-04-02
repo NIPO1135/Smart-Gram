@@ -2,6 +2,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import NoticeBoard from '../components/NoticeBoard';
 import HelpdeskCard from '../components/HelpdeskCard';
 import PopularProducts from '../components/PopularProducts';
@@ -9,92 +10,54 @@ import RuralAnimation from '../components/RuralAnimation';
 import { 
   PhoneCall, 
   Sprout, 
-  GraduationCap, 
   ShoppingBag, 
-  Heart, 
-  Trophy,
-  Share2,
-  Award
+  Heart
 } from 'lucide-react';
 
 const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onViewChange }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { config } = useAppConfig();
 
-  const gridCategories = [
-    {
-      id: 'emergency',
-      title: t.emergency,
-      desc: t.emergencyDesc,
-      icon: PhoneCall,
-      color: 'bg-red-500',
-      lightColor: 'bg-red-50',
-      action: () => onViewChange?.('emergency')
-    },
-    {
-      id: 'agriculture',
-      title: t.agriculture,
-      desc: t.agriDesc,
-      icon: Sprout,
-      color: 'bg-emerald-500',
-      lightColor: 'bg-emerald-50',
-      action: () => onViewChange?.('agriculture')
-    },
-    {
-      id: 'education',
-      title: t.education,
-      desc: t.eduDesc,
-      icon: GraduationCap,
-      color: 'bg-blue-500',
-      lightColor: 'bg-blue-50',
-      action: () => onViewChange?.('education')
-    },
-    {
-      id: 'shopping',
-      title: t.shopping,
-      desc: t.shopDesc,
-      icon: ShoppingBag,
-      color: 'bg-orange-500',
-      lightColor: 'bg-orange-50',
-      action: () => onViewChange?.('shopping')
-    },
-    {
-      id: 'blood',
-      title: t.blood,
-      desc: t.bloodDesc,
-      icon: Heart,
-      color: 'bg-rose-500',
-      lightColor: 'bg-rose-50',
-      action: () => onViewChange?.('blood')
-    },
-    {
-      id: 'sports',
-      title: t.sports,
-      desc: t.sportsDesc,
-      icon: Trophy,
-      color: 'bg-amber-500',
-      lightColor: 'bg-amber-50',
-      action: () => onViewChange?.('sports')
-    },
-    {
-      id: 'sharingMarket',
-      title: t.sharingMarket,
-      desc: t.sharingMarketDesc,
-      icon: Share2,
-      color: 'bg-orange-500',
-      lightColor: 'bg-orange-50',
-      action: () => onViewChange?.('sharingMarket')
-    },
-    {
-      id: 'talentHub',
-      title: t.talentHub,
-      desc: t.talentHubDesc,
-      icon: Award,
-      color: 'bg-orange-500',
-      lightColor: 'bg-orange-50',
-      action: () => onViewChange?.('talentHub')
-    }
-  ];
+  const ICONS = {
+    PhoneCall,
+    Sprout,
+    ShoppingBag,
+    Heart,
+  } as const;
+
+  const DEFAULT_TEXT_KEYS = {
+    emergency: { titleKey: 'emergency', descKey: 'emergencyDesc' },
+    agriculture: { titleKey: 'agriculture', descKey: 'agriDesc' },
+    shopping: { titleKey: 'shopping', descKey: 'shopDesc' },
+    blood: { titleKey: 'blood', descKey: 'bloodDesc' },
+  } as const;
+
+  const gridCategories = config.dashboardCards
+    .filter((c) => c.enabled)
+    .map((c) => {
+      const keys = DEFAULT_TEXT_KEYS[c.id];
+      const defaultTitle = (t as any)[keys.titleKey] as string;
+      const defaultDesc = (t as any)[keys.descKey] as string;
+
+      const titleOverride = language === 'bn' ? c.titleOverride?.bn : c.titleOverride?.en;
+      const descOverride = language === 'bn' ? c.descOverride?.bn : c.descOverride?.en;
+
+      const title = (titleOverride?.trim() ? titleOverride : defaultTitle) ?? defaultTitle;
+      const desc = (descOverride?.trim() ? descOverride : defaultDesc) ?? defaultDesc;
+
+      const icon = ICONS[c.iconKey];
+
+      return {
+        id: c.id,
+        title,
+        desc,
+        icon,
+        color: c.color,
+        lightColor: c.lightColor,
+        action: () => onViewChange?.(c.id),
+      };
+    });
 
   return (
     <div className="pb-28">

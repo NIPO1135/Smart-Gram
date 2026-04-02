@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import { 
   Droplet, 
   Phone, 
@@ -18,82 +18,107 @@ import {
 
 interface Donor {
   id: string;
-  name: string;
-  group: string;
+  name?: string;
+  blood_group?: string;
+  group?: string;
   location: string;
-  lastDonation: string;
+  last_donation?: string;
+  lastDonation?: string;
   phone: string;
-}
-
-interface Request {
-  id: string;
-  group: string;
-  location: string;
-  hospital: string;
-  bags: number;
-  date: string;
-  urgent: boolean;
 }
 
 const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
+  const { config } = useAppConfig();
   const [activeGroup, setActiveGroup] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRegModalOpen, setIsRegModalOpen] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [sloganIndex, setSloganIndex] = useState(0);
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [regLoading, setRegLoading] = useState(false);
+  const [regError, setRegError] = useState('');
+
+  const API_BASE_URL = 'http://localhost/smartgram-api';
 
   useEffect(() => {
-    // Pick a random slogan index on mount
     setSloganIndex(Math.floor(Math.random() * 3));
+    fetchDonors('All');
   }, []);
 
+  const fetchDonors = async (group: string) => {
+    setLoading(true);
+    try {
+      const url = group === 'All' 
+        ? `${API_BASE_URL}/bloodbank_donors.php`
+        : `${API_BASE_URL}/bloodbank_donors.php?bloodGroup=${group}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setDonors(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching donors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const bloodGroups = ['All', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+  const slogans = config.blood.slogans.map(s => (language === 'bn' ? s.bn : s.en));
 
-  const slogans = [t.slogan1, t.slogan2, t.slogan3];
-
-  const mockDonors: Donor[] = [
-    { id: '1', name: language === 'bn' ? 'আরিফ আহমেদ' : 'Arif Ahmed', group: 'O+', location: language === 'bn' ? 'দক্ষিণ গ্রাম' : 'South Village', lastDonation: '12-10-2023', phone: '01711111111' },
-    { id: '2', name: language === 'bn' ? 'সোহেল রানা' : 'Sohel Rana', group: 'A+', location: language === 'bn' ? 'উত্তর পাড়া' : 'North Para', lastDonation: '05-01-2024', phone: '01722222222' },
-    { id: '3', name: language === 'bn' ? 'কামাল উদ্দিন' : 'Kamal Uddin', group: 'B+', location: language === 'bn' ? 'পূর্ব গ্রাম' : 'East Village', lastDonation: '15-02-2024', phone: '01733333333' },
-    { id: '4', name: language === 'bn' ? 'রিনা আক্তার' : 'Rina Akter', group: 'O+', location: language === 'bn' ? 'সদর বাজার' : 'Sadar Bazar', lastDonation: '20-12-2023', phone: '01744444444' },
-  ];
-
-  const mockRequests: Request[] = [
-    { 
-      id: 'r1', 
-      group: 'B-', 
-      location: language === 'bn' ? 'গ্রাম হাসপাতাল' : 'Village Hospital', 
-      hospital: language === 'bn' ? 'উপজেলা স্বাস্থ্য কমপ্লেক্স' : 'Upazila Health Complex', 
-      bags: 2, 
-      date: 'Today', 
-      urgent: true 
-    },
-    { 
-      id: 'r2', 
-      group: 'O+', 
-      location: language === 'bn' ? 'পূর্ব গ্রাম' : 'East Village', 
-      hospital: language === 'bn' ? 'ক্লিনিক রোড' : 'Clinic Road', 
-      bags: 1, 
-      date: 'Tomorrow', 
-      urgent: false 
-    },
-  ];
-
-  const filteredDonors = mockDonors.filter(donor => {
-    const matchesGroup = activeGroup === 'All' || donor.group === activeGroup;
-    const matchesSearch = donor.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          donor.location.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredDonors = donors.filter(donor => {
+    const matchesGroup = activeGroup === 'All' || donor.blood_group === activeGroup;
+    const matchesSearch = donor.location.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesGroup && matchesSearch;
   });
 
-  const handleRegisterDonor = (e: React.FormEvent) => {
+  const handleGroupChange = (group: string) => {
+    setActiveGroup(group);
+    fetchDonors(group);
+  };
+
+  const handleRegisterDonor = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setRegSuccess(true);
-    setTimeout(() => {
-      setRegSuccess(false);
-      setIsRegModalOpen(false);
-    }, 2000);
+    setRegLoading(true);
+    setRegError('');
+
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/bloodbank_register.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bloodGroup: formData.get('bloodGroup'),
+          phone: formData.get('phone'),
+          location: formData.get('location'),
+          lastDonation: formData.get('lastDonation'),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setRegSuccess(true);
+        setTimeout(() => {
+          setRegSuccess(false);
+          setIsRegModalOpen(false);
+          fetchDonors(activeGroup);
+        }, 2000);
+      } else {
+        setRegError(data.message || 'Registration failed');
+      }
+    } catch (error) {
+      setRegError('Network error. Please try again.');
+    } finally {
+      setRegLoading(false);
+    }
   };
 
   return (
@@ -141,64 +166,6 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Emergency Requests Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <div>
-              <h3 className="text-lg font-black text-red-600 flex items-center mb-1">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                {t.emergencyReq}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {language === 'bn' ? 'জরুরীভাবে রক্তের প্রয়োজন' : 'Urgent blood needed'}
-              </p>
-            </div>
-          </div>
-          <div className="flex overflow-x-auto space-x-4 pb-4 no-scrollbar snap-x">
-            {mockRequests.map((req) => (
-              <div key={req.id} className={`flex-shrink-0 w-80 bg-gradient-to-br ${req.urgent ? 'from-red-50 to-rose-100' : 'from-white to-red-50'} border-2 ${req.urgent ? 'border-red-300' : 'border-red-100'} rounded-[2.5rem] p-6 snap-start relative overflow-hidden shadow-lg hover:shadow-xl transition-all`}>
-                {req.urgent && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-red-600 to-rose-600 text-white px-5 py-2 rounded-bl-3xl text-xs font-black uppercase tracking-wider shadow-lg animate-pulse">
-                    ⚠️ {t.urgent}
-                  </div>
-                )}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="bg-gradient-to-br from-red-600 to-rose-600 text-white p-4 rounded-2xl font-black text-xl shadow-lg">
-                    {req.group}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-red-500 uppercase tracking-tight mb-1">{t.bagsNeeded}</p>
-                    <p className="text-2xl font-black text-red-600 leading-none">{req.bags} {language === 'bn' ? 'ব্যাগ' : 'Bags'}</p>
-                  </div>
-                </div>
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-start text-sm text-gray-700 font-bold bg-white/60 p-3 rounded-xl">
-                    <MapPin className="w-4 h-4 mr-2 text-red-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-500 mb-0.5">{language === 'bn' ? 'হাসপাতাল:' : 'Hospital:'}</p>
-                      <p>{req.hospital}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start text-sm text-gray-700 font-bold bg-white/60 p-3 rounded-xl">
-                    <Calendar className="w-4 h-4 mr-2 text-red-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-gray-500 mb-0.5">{t.dateNeeded}:</p>
-                      <p>{req.date === 'Today' ? (language === 'bn' ? 'আজ' : 'Today') : req.date === 'Tomorrow' ? (language === 'bn' ? 'আগামীকাল' : 'Tomorrow') : req.date}</p>
-                    </div>
-                  </div>
-                </div>
-                <button className={`w-full py-4 rounded-2xl text-sm font-black uppercase tracking-wider transition-all active:scale-95 shadow-lg ${
-                  req.urgent 
-                    ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700' 
-                    : 'bg-white border-2 border-red-200 text-red-600 hover:bg-red-50'
-                }`}>
-                  {t.callNow}
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Filter & Search */}
         <section className="space-y-6">
           <div>
@@ -227,7 +194,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {bloodGroups.map((group) => (
                 <button
                   key={group}
-                  onClick={() => setActiveGroup(group)}
+                  onClick={() => handleGroupChange(group)}
                   className={`px-7 py-3.5 rounded-full whitespace-nowrap text-sm font-black uppercase tracking-wider transition-all active:scale-95 ${
                     activeGroup === group 
                     ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-xl shadow-red-600/30 scale-105' 
@@ -255,39 +222,44 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
           </div>
           <div className="space-y-4">
-            {filteredDonors.map((donor) => (
-              <div 
-                key={donor.id}
-                className="bg-gradient-to-br from-white to-red-50/50 border-2 border-red-100 rounded-[2.5rem] p-6 shadow-md hover:shadow-xl transition-all flex items-center justify-between group"
-              >
-                <div className="flex items-center space-x-5 flex-1">
-                  <div className="bg-gradient-to-br from-red-600 to-rose-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl shadow-xl shadow-red-600/30 group-hover:scale-110 transition-transform">
-                    {donor.group}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-black text-gray-800 text-lg leading-none mb-2">{donor.name}</h4>
-                    <div className="flex flex-wrap items-center gap-3 text-gray-600">
-                      <div className="flex items-center text-xs font-bold bg-white/80 px-3 py-1.5 rounded-lg">
-                        <MapPin className="w-3.5 h-3.5 mr-1.5 text-red-500" />
-                        <span>{donor.location}</span>
-                      </div>
-                      <div className="flex items-center text-xs font-bold bg-white/80 px-3 py-1.5 rounded-lg">
-                        <Calendar className="w-3.5 h-3.5 mr-1.5 text-red-500" />
-                        <span>{language === 'bn' ? 'সর্বশেষ:' : 'Last:'} {donor.lastDonation}</span>
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 font-bold">{language === 'bn' ? 'লোড হচ্ছে...' : 'Loading...'}</p>
+              </div>
+            ) : filteredDonors.length > 0 ? (
+              filteredDonors.map((donor) => (
+                <div 
+                  key={donor.id}
+                  className="bg-gradient-to-br from-white to-red-50/50 border-2 border-red-100 rounded-[2.5rem] p-6 shadow-md hover:shadow-xl transition-all flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-5 flex-1">
+                    <div className="bg-gradient-to-br from-red-600 to-rose-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl shadow-xl shadow-red-600/30 group-hover:scale-110 transition-transform">
+                      {donor.blood_group}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-gray-800 text-lg leading-none mb-2">{donor.name}</h4>
+                      <div className="flex flex-wrap items-center gap-3 text-gray-600">
+                        <div className="flex items-center text-xs font-bold bg-white/80 px-3 py-1.5 rounded-lg">
+                          <MapPin className="w-3.5 h-3.5 mr-1.5 text-red-500" />
+                          <span>{donor.location}</span>
+                        </div>
+                        <div className="flex items-center text-xs font-bold bg-white/80 px-3 py-1.5 rounded-lg">
+                          <Calendar className="w-3.5 h-3.5 mr-1.5 text-red-500" />
+                          <span>{language === 'bn' ? 'সর্বশেষ:' : 'Last:'} {donor.last_donation}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <a 
+                    href={`tel:${donor.phone}`}
+                    className="bg-gradient-to-br from-green-500 to-emerald-600 text-white p-5 rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all active:scale-90 shadow-lg ml-4"
+                    title={language === 'bn' ? 'কল করুন' : 'Call Now'}
+                  >
+                    <Phone className="w-6 h-6" />
+                  </a>
                 </div>
-                <a 
-                  href={`tel:${donor.phone}`}
-                  className="bg-gradient-to-br from-green-500 to-emerald-600 text-white p-5 rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all active:scale-90 shadow-lg ml-4"
-                  title={language === 'bn' ? 'কল করুন' : 'Call Now'}
-                >
-                  <Phone className="w-6 h-6" />
-                </a>
-              </div>
-            ))}
-            {filteredDonors.length === 0 && (
+              ))
+            ) : (
               <div className="text-center py-20">
                 <div className="bg-red-50 p-6 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
                   <Droplet className="w-12 h-12 text-red-300" />
@@ -347,13 +319,19 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
               ) : (
                 <form onSubmit={handleRegisterDonor} className="space-y-5">
+                  {regError && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4">
+                      <p className="text-red-700 text-sm">{regError}</p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-700 ml-1 flex items-center">
                         <Droplet className="w-3 h-3 mr-1 text-red-500" />
                         {t.bloodGroup}
                       </label>
-                      <select className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-red-500/20 focus:border-red-400 transition-all outline-none shadow-sm">
+                      <select name="bloodGroup" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold focus:ring-4 focus:ring-red-500/20 focus:border-red-400 transition-all outline-none shadow-sm" required>
+                        <option value="">Select</option>
                         {bloodGroups.filter(g => g !== 'All').map(g => <option key={g} value={g}>{g}</option>)}
                       </select>
                     </div>
@@ -362,7 +340,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <Phone className="w-3 h-3 mr-1 text-red-500" />
                         {t.phone}
                       </label>
-                      <input type="tel" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" placeholder={language === 'bn' ? '০১৭XXXXXXXX' : '017XXXXXXXX'} required />
+                      <input name="phone" type="tel" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" placeholder={language === 'bn' ? '০১৭XXXXXXXX' : '017XXXXXXXX'} required />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -370,17 +348,17 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <MapPin className="w-3 h-3 mr-1 text-red-500" />
                       {t.location}
                     </label>
-                    <input type="text" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" placeholder={language === 'bn' ? 'গ্রামের নাম লিখুন' : 'Enter village name'} required />
+                    <input name="location" type="text" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" placeholder={language === 'bn' ? 'গ্রামের নাম লিখুন' : 'Enter village name'} required />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-700 ml-1 flex items-center">
                       <Calendar className="w-3 h-3 mr-1 text-red-500" />
                       {t.lastDonation}
                     </label>
-                    <input type="date" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" required />
+                    <input name="lastDonation" type="date" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" required />
                   </div>
-                  <button type="submit" className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white py-5 rounded-3xl font-black uppercase tracking-wider shadow-xl shadow-red-600/30 active:scale-95 transition-all mt-6 hover:from-red-700 hover:to-rose-700">
-                    {t.submit}
+                  <button type="submit" disabled={regLoading} className="w-full bg-gradient-to-r from-red-600 to-rose-600 text-white py-5 rounded-3xl font-black uppercase tracking-wider shadow-xl shadow-red-600/30 active:scale-95 transition-all mt-6 hover:from-red-700 hover:to-rose-700 disabled:opacity-50">
+                    {regLoading ? (language === 'bn' ? 'সংরক্ষণ হচ্ছে...' : 'Saving...') : t.submit}
                   </button>
                 </form>
               )}
