@@ -6,22 +6,27 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   user: any;
+  logout: () => void;
+  updateUser: (updates: Partial<any>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = 'http://localhost/smartgram-api';
+const API_BASE_URL = 'http://localhost:5000/api/auth';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(() => {
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
 
   const register = async (name: string, phone: string, password: string, email: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/register.php`, {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/login.php`, {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,8 +76,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+  };
+
+  const updateUser = (updates: Partial<any>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ register, login, isLoading, error, user }}>
+    <AuthContext.Provider value={{ register, login, logout, updateUser, isLoading, error, user }}>
       {children}
     </AuthContext.Provider>
   );

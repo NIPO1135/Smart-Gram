@@ -40,7 +40,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
 
-  const API_BASE_URL = 'http://localhost/smartgram-api';
+  const API_BASE_URL = 'http://localhost:5000/api/bloodbank';
 
   useEffect(() => {
     setSloganIndex(Math.floor(Math.random() * 3));
@@ -51,8 +51,8 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setLoading(true);
     try {
       const url = group === 'All' 
-        ? `${API_BASE_URL}/bloodbank_donors.php`
-        : `${API_BASE_URL}/bloodbank_donors.php?bloodGroup=${group}`;
+        ? `${API_BASE_URL}/donors`
+        : `${API_BASE_URL}/donors?bloodGroup=${group}`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -89,7 +89,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const formData = new FormData(e.currentTarget);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/bloodbank_register.php`, {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
