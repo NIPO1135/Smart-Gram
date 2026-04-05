@@ -6,6 +6,7 @@ const donorSchema = new mongoose.Schema({
   location: { type: String, required: true },
   last_donation: { type: String, required: true },
   name: { type: String, default: 'Anonymous Donor' },
+  image: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -36,8 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       
-      if (data.message === 'User registered') {
+      if (data.message === 'User registered' || response.ok) {
         setError(null);
+        await login(phone, password);
       } else {
         setError(data.message || 'Registration failed');
       }

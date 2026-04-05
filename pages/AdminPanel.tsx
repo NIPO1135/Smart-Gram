@@ -1,49 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, ChevronUp, RotateCcw, Save } from 'lucide-react';
+import { ArrowLeft, Check, LayoutGrid, Bell, PhoneCall, ShoppingBag, Droplet, Headphones, Star, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  AppConfig,
-  DashboardCardConfig,
-  DashboardIconKey,
-  DEFAULT_APP_CONFIG,
-  EmergencyCategoryConfig,
-  HandmadeProductConfig,
-  PopularProductConfig,
-  PopularProductIconKey,
-  BloodDonorConfig,
-  BloodRequestConfig,
-  useAppConfig,
-} from '../context/AppConfigContext';
+import { AppConfig, DEFAULT_APP_CONFIG, useAppConfig } from '../context/AppConfigContext';
 
-const ICON_OPTIONS: { key: DashboardIconKey; label: string }[] = [
-  { key: 'PhoneCall', label: 'PhoneCall' },
-  { key: 'Sprout', label: 'Sprout' },
-  { key: 'ShoppingBag', label: 'ShoppingBag' },
-  { key: 'Heart', label: 'Heart' },
-];
+import AdminNoticeBoard from '../components/admin/AdminNoticeBoard';
+import AdminDashboardCards from '../components/admin/AdminDashboardCards';
+import AdminEmergency from '../components/admin/AdminEmergency';
+import AdminVillageMarket from '../components/admin/AdminVillageMarket';
+import AdminBloodBank from '../components/admin/AdminBloodBank';
+import AdminDigitalHelpdesk from '../components/admin/AdminDigitalHelpdesk';
+import AdminPopularProducts from '../components/admin/AdminPopularProducts';
 
-const POPULAR_ICON_OPTIONS: { key: PopularProductIconKey; label: string }[] = [
-  { key: 'Milk', label: 'Milk' },
-  { key: 'Egg', label: 'Egg' },
-];
-
-function getDefaultTitleKey(id: DashboardCardConfig['id']) {
-  switch (id) {
-    case 'emergency': return 'emergency';
-    case 'agriculture': return 'agriculture';
-    case 'shopping': return 'shopping';
-    case 'blood': return 'blood';
-  }
-}
-
-function getDefaultDescKey(id: DashboardCardConfig['id']) {
-  switch (id) {
-    case 'emergency': return 'emergencyDesc';
-    case 'agriculture': return 'agriDesc';
-    case 'shopping': return 'shopDesc';
-    case 'blood': return 'bloodDesc';
-  }
-}
+type AdminView = 'home' | 'notice' | 'cards' | 'emergency' | 'market' | 'blood' | 'helpdesk' | 'popular';
 
 const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { language, t } = useLanguage();
@@ -52,28 +20,30 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [draft, setDraft] = useState<AppConfig>(() => config);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [activeView, setActiveView] = useState<AdminView>('home');
 
   const labels = useMemo(() => {
     return {
-      title: language === 'bn' ? 'অ্যাডমিন প্যানেল' : 'Admin Panel',
+      title: language === 'bn' ? 'অ্যাডমিন ড্যাশবোর্ড' : 'Admin Dashboard',
       noticeTitle: language === 'bn' ? 'নোটিশ বোর্ড' : 'Notice Board',
-      dashboardTitle: language === 'bn' ? 'ড্যাশবোর্ড কার্ড' : 'Dashboard Cards',
+      helpdeskTitle: language === 'bn' ? 'ডিজিটাল হেল্পডেস্ক' : 'Digital Helpdesk',
+      dashboardTitle: language === 'bn' ? 'ড্যাশবোর্ড কার্ডস (হোম)' : 'Dashboard Cards (Home)',
       emergencyTitle: language === 'bn' ? 'ইমার্জেন্সি কন্টাক্ট' : 'Emergency Contacts',
-      handmadeTitle: language === 'bn' ? 'হ্যান্ডমেড পণ্য' : 'Handmade Products',
+      handmadeTitle: language === 'bn' ? 'গ্রামের বাজার (মার্কেট)' : 'Village Market',
       popularTitle: language === 'bn' ? 'পপুলার প্রোডাক্ট' : 'Popular Products',
-      bloodTitle: language === 'bn' ? 'ব্লাড ব্যাংক ডাটা' : 'Blood Bank Data',
+      bloodTitle: language === 'bn' ? 'ব্লাড ব্যাংক' : 'Blood Bank Data',
       english: language === 'bn' ? 'ইংরেজি' : 'English',
       bangla: language === 'bn' ? 'বাংলা' : 'Bangla',
-      save: language === 'bn' ? 'সংরক্ষণ করুন' : 'Save',
+      save: language === 'bn' ? 'সংরক্ষণ করুন' : 'Save Changes',
       reset: language === 'bn' ? 'ডিফল্টে ফেরত' : 'Reset to defaults',
       enabled: language === 'bn' ? 'চালু' : 'Enabled',
       icon: language === 'bn' ? 'আইকন' : 'Icon',
       color: language === 'bn' ? 'কালার' : 'Color',
       lightColor: language === 'bn' ? 'লাইট কালার' : 'Light color',
       overrideTitle: language === 'bn' ? 'শিরোনাম (Override)' : 'Title override',
-      overrideDesc: language === 'bn' ? 'বর্ণনা (Override)' : 'Description override',
+      overrideDesc: language === 'bn' ? 'বর্ণনা (Override)' : 'Description',
       defaultLabel: language === 'bn' ? 'ডিফল্ট' : 'Default',
-      success: language === 'bn' ? 'সেভ হয়েছে' : 'Saved',
+      success: language === 'bn' ? 'সফলভাবে সেভ হয়েছে!' : 'Saved Successfully!',
       name: language === 'bn' ? 'নাম' : 'Name',
       description: language === 'bn' ? 'বর্ণনা' : 'Description',
       phone: language === 'bn' ? 'ফোন' : 'Phone',
@@ -83,30 +53,10 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       location: language === 'bn' ? 'লোকেশন' : 'Location',
       hospital: language === 'bn' ? 'হাসপাতাল' : 'Hospital',
       bags: language === 'bn' ? 'ব্যাগ' : 'Bags',
-      dateLabel: language === 'bn' ? 'তারিখ লিখা' : 'Date label',
+      dateLabel: language === 'bn' ? 'তারিখ টেক্সট' : 'Date label',
       urgent: language === 'bn' ? 'জরুরি' : 'Urgent',
-      slogans: language === 'bn' ? 'স্লোগান' : 'Slogans',
     };
   }, [language]);
-
-  const updateCard = (idx: number, patch: Partial<DashboardCardConfig>) => {
-    setDraft(prev => {
-      const nextCards = prev.dashboardCards.map((c, i) => (i === idx ? { ...c, ...patch } : c));
-      return { ...prev, dashboardCards: nextCards };
-    });
-  };
-
-  const moveCard = (idx: number, dir: -1 | 1) => {
-    setDraft(prev => {
-      const next = [...prev.dashboardCards];
-      const target = idx + dir;
-      if (target < 0 || target >= next.length) return prev;
-      const temp = next[idx];
-      next[idx] = next[target];
-      next[target] = temp;
-      return { ...prev, dashboardCards: next };
-    });
-  };
 
   const handleSave = () => {
     setSaved(false);
@@ -115,1120 +65,124 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const bn = draft.notices.bn.trim();
     const en = draft.notices.en.trim();
     if (!bn || !en) {
-      setError(language === 'bn' ? 'নোটিশ (বাংলা/ইংরেজি) খালি রাখা যাবে না' : 'Notice (Bangla/English) cannot be empty');
+      setError(language === 'bn' ? 'নোটিশ (বাংলা/ইংরেজি) খালি রাখা যাবে না' : 'Notice cannot be empty');
       return;
     }
-    if (!draft.dashboardCards.some(c => c.enabled)) {
-      setError(language === 'bn' ? 'কমপক্ষে ১টি কার্ড চালু রাখতে হবে' : 'At least 1 dashboard card must be enabled');
-      return;
-    }
-
+    
     setConfig({
       ...draft,
       notices: { bn, en },
     });
     setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
+    setTimeout(() => {
+      setSaved(false);
+      setActiveView('home'); // Go back to home after save
+    }, 1500);
   };
 
   const handleReset = () => {
+    if(!window.confirm(language === 'bn' ? 'আপনি কি ডাটা অরিজিনাল অবস্থায় ফেরত নিতে চান?' : 'Are you sure you want to reset everything?')) return;
     resetToDefaults();
     setDraft(DEFAULT_APP_CONFIG);
     setError(null);
     setSaved(false);
+    setActiveView('home');
   };
+
+  const adminMenuIcons = [
+    { id: 'notice', label: labels.noticeTitle, icon: Bell, color: 'bg-amber-500', light: 'bg-amber-50' },
+    { id: 'cards', label: labels.dashboardTitle, icon: LayoutGrid, color: 'bg-indigo-500', light: 'bg-indigo-50' },
+    { id: 'emergency', label: labels.emergencyTitle, icon: PhoneCall, color: 'bg-rose-500', light: 'bg-rose-50' },
+    { id: 'market', label: labels.handmadeTitle, icon: ShoppingBag, color: 'bg-emerald-500', light: 'bg-emerald-50' },
+    { id: 'blood', label: labels.bloodTitle, icon: Droplet, color: 'bg-red-600', light: 'bg-red-50' },
+    { id: 'helpdesk', label: labels.helpdeskTitle, icon: Headphones, color: 'bg-cyan-500', light: 'bg-cyan-50' },
+    { id: 'popular', label: labels.popularTitle, icon: Star, color: 'bg-blue-500', light: 'bg-blue-50' },
+  ] as const;
+
+  const sharedProps = { draft, setDraft, language, t, labels, onSave: handleSave, onBack: () => setActiveView('home') };
 
   return (
     <div className="pb-32 animate-in fade-in duration-500">
-      <div className="bg-green-600 pt-6 pb-10 px-6 rounded-b-[3rem] shadow-xl relative overflow-hidden">
-        <div className="max-w-4xl mx-auto relative z-10">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-2xl font-black tracking-widest uppercase text-[10px] flex items-center gap-2 transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.back}</span>
-            </button>
-            <h2 className="text-white text-2xl font-black tracking-tight">{labels.title}</h2>
-          </div>
+      {/* Header */}
+      <div className="bg-green-600 pt-8 pb-10 px-6 rounded-b-[3.5rem] shadow-xl text-center relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 right-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
         </div>
+        <div className="relative z-10 flex items-center mb-6">
+          <button onClick={onBack} className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors">
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+          <h2 className="text-white text-2xl font-black mx-auto pr-8">{labels.title}</h2>
+        </div>
+        
+        {activeView === 'home' && (
+          <p className="text-green-100 font-bold uppercase tracking-widest text-[10px] relative z-10 opacity-90 pb-2">
+            {language === 'bn' ? 'যেকোনো কার্ড সিলেক্ট করে মেইনটেইন করুন' : 'Select a card to manage module'}
+          </p>
+        )}
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-20 space-y-6">
-        {/* Actions */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleSave}
-              className="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all"
-            >
-              <Save className="w-4 h-4" />
-              <span>{labels.save}</span>
-            </button>
-            <button
-              onClick={handleReset}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all"
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>{labels.reset}</span>
-            </button>
+      <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-20">
+        
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-lg mb-6 flex items-center justify-between">
+            <p className="text-red-700 text-sm font-bold">{error}</p>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 font-bold">×</button>
           </div>
-
-          <div className="min-h-[20px]">
-            {saved ? (
-              <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-2xl font-black uppercase tracking-widest text-[10px]">
-                <Check className="w-4 h-4" />
-                <span>{labels.success}</span>
-              </div>
-            ) : error ? (
-              <div className="text-red-600 font-bold text-xs">{error}</div>
-            ) : null}
+        )}
+        
+        {saved && (
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-xl shadow-lg mb-6 flex items-center shadow-green-900/10 animate-in slide-in-from-top-4">
+            <div className="bg-green-500 rounded-full p-1 mr-3"><Check className="w-4 h-4 text-white" /></div>
+            <p className="text-green-700 text-sm font-bold">{labels.success}</p>
           </div>
-        </div>
+        )}
 
-        {/* Notice Board */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.noticeTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'বাংলা এবং ইংরেজি আলাদা করে লিখুন' : 'Edit Bangla and English separately'}
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-            <div>
-              <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.bangla}</label>
-              <textarea
-                value={draft.notices.bn}
-                onChange={(e) => setDraft(prev => ({ ...prev, notices: { ...prev.notices, bn: e.target.value } }))}
-                rows={5}
-                className="w-full p-4 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold"
-              />
+        {/* Dashboard Grid View */}
+        {activeView === 'home' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {adminMenuIcons.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveView(item.id as AdminView)}
+                  className={`p-6 rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4 transition-all transform hover:shadow-xl hover:-translate-y-1 active:scale-95 shadow-sm border border-transparent hover:border-white ${item.light} group min-h-[160px]`}
+                >
+                  <div className={`${item.color} p-4 rounded-3xl text-white shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
+                    <item.icon className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-800 text-[13px] sm:text-base leading-none tracking-tight">{item.label}</h3>
+                  </div>
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.english}</label>
-              <textarea
-                value={draft.notices.en}
-                onChange={(e) => setDraft(prev => ({ ...prev, notices: { ...prev.notices, en: e.target.value } }))}
-                rows={5}
-                className="w-full p-4 rounded-2xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold"
-              />
+
+            <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-red-50 text-center mt-10">
+              <p className="text-xs text-gray-500 font-bold mb-3">
+                {language === 'bn' ? 'সবকিছু আগের অবস্থায় ফিরিয়ে নিতে' : 'Reset all settings to default'}
+              </p>
+              <button onClick={handleReset} className="mx-auto w-full max-w-xs border-2 border-dashed border-red-200 text-red-500 py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-red-50 transition-colors">
+                <RotateCcw className="w-4 h-4" />
+                {labels.reset}
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Dashboard Cards */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.dashboardTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'কার্ড অন/অফ, অর্ডার, নাম, বর্ণনা, আইকন পরিবর্তন করুন' : 'Toggle, reorder, rename, change description and icon'}
-          </p>
+        {/* Sub Views */}
+        {activeView === 'notice' && <AdminNoticeBoard {...sharedProps} />}
+        {activeView === 'cards' && <AdminDashboardCards {...sharedProps} />}
+        {activeView === 'emergency' && <AdminEmergency {...sharedProps} />}
+        {activeView === 'market' && <AdminVillageMarket {...sharedProps} />}
+        {activeView === 'blood' && <AdminBloodBank {...sharedProps} />}
+        {activeView === 'helpdesk' && <AdminDigitalHelpdesk {...sharedProps} />}
+        {activeView === 'popular' && <AdminPopularProducts {...sharedProps} />}
 
-          <div className="space-y-4 mt-5">
-            {draft.dashboardCards.map((card, idx) => {
-              const defaultTitleKey = getDefaultTitleKey(card.id);
-              const defaultDescKey = getDefaultDescKey(card.id);
-
-              const defaultTitle = defaultTitleKey ? (t as any)[defaultTitleKey] : card.id;
-              const defaultDesc = defaultDescKey ? (t as any)[defaultDescKey] : '';
-
-              return (
-                <div key={card.id} className="border border-gray-100 rounded-[2rem] p-5 bg-gray-50/40">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-black text-gray-800 tracking-tight">{defaultTitle}</h4>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{card.id}</span>
-                      </div>
-                      <p className="text-[10px] text-gray-400 font-bold mt-1">{labels.defaultLabel}: {defaultDesc}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={() => moveCard(idx, -1)}
-                        className="px-3 py-2 rounded-2xl bg-white border border-gray-200 hover:bg-gray-50 transition-all"
-                        aria-label="Move up"
-                      >
-                        <ChevronUp className="w-4 h-4 text-gray-700" />
-                      </button>
-                      <button
-                        onClick={() => moveCard(idx, 1)}
-                        className="px-3 py-2 rounded-2xl bg-white border border-gray-200 hover:bg-gray-50 transition-all"
-                        aria-label="Move down"
-                      >
-                        <ChevronDown className="w-4 h-4 text-gray-700" />
-                      </button>
-
-                      <label className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-2xl">
-                        <input
-                          type="checkbox"
-                          checked={card.enabled}
-                          onChange={(e) => updateCard(idx, { enabled: e.target.checked })}
-                          className="accent-green-600"
-                        />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">{labels.enabled}</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.icon}</label>
-                        <select
-                          value={card.iconKey}
-                          onChange={(e) => updateCard(idx, { iconKey: e.target.value as DashboardIconKey })}
-                          className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                        >
-                          {ICON_OPTIONS.map(o => (
-                            <option key={o.key} value={o.key}>{o.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.color}</label>
-                        <input
-                          value={card.color}
-                          onChange={(e) => updateCard(idx, { color: e.target.value })}
-                          className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          placeholder="bg-green-600"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.lightColor}</label>
-                        <input
-                          value={card.lightColor}
-                          onChange={(e) => updateCard(idx, { lightColor: e.target.value })}
-                          className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          placeholder="bg-green-50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.overrideTitle} ({labels.bangla})</label>
-                          <input
-                            value={card.titleOverride?.bn ?? ''}
-                            onChange={(e) => updateCard(idx, { titleOverride: { en: card.titleOverride?.en ?? '', bn: e.target.value } })}
-                            className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.overrideTitle} ({labels.english})</label>
-                          <input
-                            value={card.titleOverride?.en ?? ''}
-                            onChange={(e) => updateCard(idx, { titleOverride: { en: e.target.value, bn: card.titleOverride?.bn ?? '' } })}
-                            className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.overrideDesc} ({labels.bangla})</label>
-                          <input
-                            value={card.descOverride?.bn ?? ''}
-                            onChange={(e) => updateCard(idx, { descOverride: { en: card.descOverride?.en ?? '', bn: e.target.value } })}
-                            className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-2">{labels.overrideDesc} ({labels.english})</label>
-                          <input
-                            value={card.descOverride?.en ?? ''}
-                            onChange={(e) => updateCard(idx, { descOverride: { en: e.target.value, bn: card.descOverride?.bn ?? '' } })}
-                            className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Emergency Contacts */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.emergencyTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'প্রতিটি সার্ভিসের নাম, বর্ণনা এবং নম্বর পরিবর্তন করুন' : 'Edit names, descriptions and phone numbers for each service'}
-          </p>
-
-          <div className="space-y-5 mt-5">
-            {draft.emergencyCategories.map((cat, idx) => (
-              <div key={cat.id} className="border border-gray-100 rounded-[2rem] p-4 bg-gray-50/60">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black uppercase tracking-widest text-gray-400">{cat.id}</span>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-2xl">
-                    <input
-                      type="checkbox"
-                      checked={cat.enabled}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.emergencyCategories];
-                          next[idx] = { ...next[idx], enabled: e.target.checked };
-                          return { ...prev, emergencyCategories: next };
-                        })
-                      }
-                      className="accent-green-600"
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">{labels.enabled}</span>
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.overrideTitle} ({labels.bangla})
-                    </label>
-                    <input
-                      value={cat.titleOverride?.bn ?? ''}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.emergencyCategories];
-                          next[idx] = {
-                            ...next[idx],
-                            titleOverride: {
-                              en: next[idx].titleOverride?.en ?? '',
-                              bn: e.target.value,
-                            },
-                          };
-                          return { ...prev, emergencyCategories: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.overrideTitle} ({labels.english})
-                    </label>
-                    <input
-                      value={cat.titleOverride?.en ?? ''}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.emergencyCategories];
-                          next[idx] = {
-                            ...next[idx],
-                            titleOverride: {
-                              en: e.target.value,
-                              bn: next[idx].titleOverride?.bn ?? '',
-                            },
-                          };
-                          return { ...prev, emergencyCategories: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {cat.contacts.map((contact, cIdx) => (
-                    <div key={contact.id} className="bg-white rounded-2xl border border-gray-100 p-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                        {labels.name} #{cIdx + 1}
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                            {labels.name} ({labels.bangla})
-                          </label>
-                          <input
-                            value={contact.name.bn}
-                            onChange={(e) =>
-                              setDraft(prev => {
-                                const next = [...prev.emergencyCategories];
-                                const contacts = [...next[idx].contacts];
-                                contacts[cIdx] = {
-                                  ...contacts[cIdx],
-                                  name: { ...contacts[cIdx].name, bn: e.target.value },
-                                };
-                                next[idx] = { ...next[idx], contacts };
-                                return { ...prev, emergencyCategories: next };
-                              })
-                            }
-                            className="w-full p-2.5 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                            {labels.name} ({labels.english})
-                          </label>
-                          <input
-                            value={contact.name.en}
-                            onChange={(e) =>
-                              setDraft(prev => {
-                                const next = [...prev.emergencyCategories];
-                                const contacts = [...next[idx].contacts];
-                                contacts[cIdx] = {
-                                  ...contacts[cIdx],
-                                  name: { ...contacts[cIdx].name, en: e.target.value },
-                                };
-                                next[idx] = { ...next[idx], contacts };
-                                return { ...prev, emergencyCategories: next };
-                              })
-                            }
-                            className="w-full p-2.5 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                            {labels.phone}
-                          </label>
-                          <input
-                            value={contact.phone}
-                            onChange={(e) =>
-                              setDraft(prev => {
-                                const next = [...prev.emergencyCategories];
-                                const contacts = [...next[idx].contacts];
-                                contacts[cIdx] = {
-                                  ...contacts[cIdx],
-                                  phone: e.target.value,
-                                };
-                                next[idx] = { ...next[idx], contacts };
-                                return { ...prev, emergencyCategories: next };
-                              })
-                            }
-                            className="w-full p-2.5 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                            {labels.description} ({labels.bangla})
-                          </label>
-                          <input
-                            value={contact.description.bn}
-                            onChange={(e) =>
-                              setDraft(prev => {
-                                const next = [...prev.emergencyCategories];
-                                const contacts = [...next[idx].contacts];
-                                contacts[cIdx] = {
-                                  ...contacts[cIdx],
-                                  description: { ...contacts[cIdx].description, bn: e.target.value },
-                                };
-                                next[idx] = { ...next[idx], contacts };
-                                return { ...prev, emergencyCategories: next };
-                              })
-                            }
-                            className="w-full p-2.5 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                            {labels.description} ({labels.english})
-                          </label>
-                          <input
-                            value={contact.description.en}
-                            onChange={(e) =>
-                              setDraft(prev => {
-                                const next = [...prev.emergencyCategories];
-                                const contacts = [...next[idx].contacts];
-                                contacts[cIdx] = {
-                                  ...contacts[cIdx],
-                                  description: { ...contacts[cIdx].description, en: e.target.value },
-                                };
-                                next[idx] = { ...next[idx], contacts };
-                                return { ...prev, emergencyCategories: next };
-                              })
-                            }
-                            className="w-full p-2.5 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Handmade Products */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.handmadeTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'হ্যান্ডমেড প্রোডাক্টের নাম, দাম, ইউনিট, ছবি পরিবর্তন করুন' : 'Edit handmade product name, price, unit and image'}
-          </p>
-          <div className="space-y-4 mt-5">
-            {draft.handmadeProducts.map((p, idx) => (
-              <div key={p.id} className="border border-gray-100 rounded-[2rem] p-4 bg-gray-50/50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{p.id}</span>
-                  <label className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-2xl">
-                    <input
-                      type="checkbox"
-                      checked={p.enabled}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], enabled: e.target.checked };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="accent-green-600"
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">{labels.enabled}</span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.bangla})
-                    </label>
-                    <input
-                      value={p.name.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], name: { ...next[idx].name, bn: e.target.value } };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.english})
-                    </label>
-                    <input
-                      value={p.name.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], name: { ...next[idx].name, en: e.target.value } };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.price}
-                    </label>
-                    <input
-                      type="number"
-                      value={p.price}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], price: Number(e.target.value) || 0 };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.unit} ({labels.bangla})
-                    </label>
-                    <input
-                      value={p.unit.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], unit: { ...next[idx].unit, bn: e.target.value } };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.unit} ({labels.english})
-                    </label>
-                    <input
-                      value={p.unit.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], unit: { ...next[idx].unit, en: e.target.value } };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      Image URL
-                    </label>
-                    <input
-                      value={p.image}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.handmadeProducts];
-                          next[idx] = { ...next[idx], image: e.target.value };
-                          return { ...prev, handmadeProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Popular Products */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.popularTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'হোম পেজের পপুলার প্রোডাক্ট কার্ড এডিট করুন' : 'Edit popular products on home screen'}
-          </p>
-          <div className="space-y-4 mt-5">
-            {draft.popularProducts.map((p, idx) => (
-              <div key={p.id} className="border border-gray-100 rounded-[2rem] p-4 bg-gray-50/50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{p.id}</span>
-                  <label className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-2xl">
-                    <input
-                      type="checkbox"
-                      checked={p.enabled}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], enabled: e.target.checked };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="accent-green-600"
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">{labels.enabled}</span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.bangla})
-                    </label>
-                    <input
-                      value={p.name.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], name: { ...next[idx].name, bn: e.target.value } };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.english})
-                    </label>
-                    <input
-                      value={p.name.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], name: { ...next[idx].name, en: e.target.value } };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.price}
-                    </label>
-                    <input
-                      value={p.price}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], price: e.target.value };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.unit} ({labels.bangla})
-                    </label>
-                    <input
-                      value={p.unit.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], unit: { ...next[idx].unit, bn: e.target.value } };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.unit} ({labels.english})
-                    </label>
-                    <input
-                      value={p.unit.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], unit: { ...next[idx].unit, en: e.target.value } };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.icon}
-                    </label>
-                    <select
-                      value={p.iconKey}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], iconKey: e.target.value as PopularProductIconKey };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    >
-                      {POPULAR_ICON_OPTIONS.map(o => (
-                        <option key={o.key} value={o.key}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.color}
-                    </label>
-                    <input
-                      value={p.color}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = [...prev.popularProducts];
-                          next[idx] = { ...next[idx], color: e.target.value };
-                          return { ...prev, popularProducts: next };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Blood Bank Data */}
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl border border-green-50">
-          <h3 className="font-black text-gray-800 text-lg">{labels.bloodTitle}</h3>
-          <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1 opacity-70">
-            {language === 'bn' ? 'ব্লাড ব্যাংক পেইজের স্লোগান, রিকোয়েস্ট ও ডোনার কার্ড এডিট করুন' : 'Edit slogans, requests and donor cards for blood bank'}
-          </p>
-
-          {/* Slogans */}
-          <div className="mt-4 space-y-3">
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-              {labels.slogans}
-            </p>
-            {draft.blood.slogans.map((s, idx) => (
-              <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                    {labels.bangla} #{idx + 1}
-                  </label>
-                  <input
-                    value={s.bn}
-                    onChange={(e) =>
-                      setDraft(prev => {
-                        const next = { ...prev.blood };
-                        const slogans = [...next.slogans];
-                        slogans[idx] = { ...slogans[idx], bn: e.target.value };
-                        return { ...prev, blood: { ...next, slogans } };
-                      })
-                    }
-                    className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                    {labels.english} #{idx + 1}
-                  </label>
-                  <input
-                    value={s.en}
-                    onChange={(e) =>
-                      setDraft(prev => {
-                        const next = { ...prev.blood };
-                        const slogans = [...next.slogans];
-                        slogans[idx] = { ...slogans[idx], en: e.target.value };
-                        return { ...prev, blood: { ...next, slogans } };
-                      })
-                    }
-                    className="w-full p-3 rounded-2xl border border-gray-200 bg-gray-50 outline-none text-sm font-bold"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Requests */}
-          <div className="mt-6 space-y-3">
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-              {language === 'bn' ? 'জরুরি রক্তের রিকোয়েস্ট' : 'Emergency Requests'}
-            </p>
-            {draft.blood.requests.map((r, idx) => (
-              <div key={r.id} className="border border-rose-100 rounded-[2rem] p-4 bg-rose-50/40">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    {r.id} ({labels.group}: {r.group})
-                  </span>
-                  <label className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-2xl">
-                    <input
-                      type="checkbox"
-                      checked={r.enabled}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = { ...requests[idx], enabled: e.target.checked };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="accent-red-600"
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">
-                      {labels.enabled}
-                    </span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.location} ({labels.bangla})
-                    </label>
-                    <input
-                      value={r.location.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            location: { ...requests[idx].location, bn: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.location} ({labels.english})
-                    </label>
-                    <input
-                      value={r.location.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            location: { ...requests[idx].location, en: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.bags}
-                    </label>
-                    <input
-                      type="number"
-                      value={r.bags}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = { ...requests[idx], bags: Number(e.target.value) || 0 };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.hospital} ({labels.bangla})
-                    </label>
-                    <input
-                      value={r.hospital.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            hospital: { ...requests[idx].hospital, bn: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.hospital} ({labels.english})
-                    </label>
-                    <input
-                      value={r.hospital.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            hospital: { ...requests[idx].hospital, en: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.dateLabel} ({labels.bangla})
-                    </label>
-                    <input
-                      value={r.dateLabel.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            dateLabel: { ...requests[idx].dateLabel, bn: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.dateLabel} ({labels.english})
-                    </label>
-                    <input
-                      value={r.dateLabel.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = {
-                            ...requests[idx],
-                            dateLabel: { ...requests[idx].dateLabel, en: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[10px] text-gray-400 font-black uppercase tracking-widest">
-                      {labels.urgent}
-                    </label>
-                    <input
-                      type="checkbox"
-                      checked={r.urgent}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const requests = [...next.requests];
-                          requests[idx] = { ...requests[idx], urgent: e.target.checked };
-                          return { ...prev, blood: { ...next, requests } };
-                        })
-                      }
-                      className="accent-red-600"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Donors */}
-          <div className="mt-6 space-y-3">
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-              {language === 'bn' ? 'রক্তদাতা লিস্ট' : 'Donor List'}
-            </p>
-            {draft.blood.donors.map((d, idx) => (
-              <div key={d.id} className="border border-red-100 rounded-[2rem] p-4 bg-red-50/40">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    {d.id} ({labels.group}: {d.group})
-                  </span>
-                  <label className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-2xl">
-                    <input
-                      type="checkbox"
-                      checked={d.enabled}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = { ...donors[idx], enabled: e.target.checked };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="accent-red-600"
-                    />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-700">
-                      {labels.enabled}
-                    </span>
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.bangla})
-                    </label>
-                    <input
-                      value={d.name.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = { ...donors[idx], name: { ...donors[idx].name, bn: e.target.value } };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.name} ({labels.english})
-                    </label>
-                    <input
-                      value={d.name.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = { ...donors[idx], name: { ...donors[idx].name, en: e.target.value } };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.location} ({labels.bangla})
-                    </label>
-                    <input
-                      value={d.location.bn}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = {
-                            ...donors[idx],
-                            location: { ...donors[idx].location, bn: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.location} ({labels.english})
-                    </label>
-                    <input
-                      value={d.location.en}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = {
-                            ...donors[idx],
-                            location: { ...donors[idx].location, en: e.target.value },
-                          };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {t.lastDonation}
-                    </label>
-                    <input
-                      value={d.lastDonation}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = { ...donors[idx], lastDonation: e.target.value };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                      placeholder="dd-mm-yyyy"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
-                      {labels.phone}
-                    </label>
-                    <input
-                      value={d.phone}
-                      onChange={(e) =>
-                        setDraft(prev => {
-                          const next = { ...prev.blood };
-                          const donors = [...next.donors];
-                          donors[idx] = { ...donors[idx], phone: e.target.value };
-                          return { ...prev, blood: { ...next, donors } };
-                        })
-                      }
-                      className="w-full p-3 rounded-2xl border border-gray-200 bg-white outline-none text-sm font-bold"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
 };
 
 export default AdminPanel;
-

@@ -1,10 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const bloodbankRoutes = require('./routes/bloodbank');
+const marketRoutes = require('./routes/market');
 
 const app = express();
 
@@ -12,9 +15,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Setup static uploads folder
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+app.use('/uploads', express.static(uploadsDir));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bloodbank', bloodbankRoutes);
+app.use('/api/market', marketRoutes);
 
 // Database connection
 const PORT = process.env.PORT || 5000;

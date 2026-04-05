@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import { 
   Flag, 
   HelpCircle, 
@@ -19,7 +20,8 @@ import {
 type SubView = 'menu' | 'complaint' | 'info' | 'volunteer' | 'success';
 
 const HelpdeskCard: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { config } = useAppConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [activeView, setActiveView] = useState<SubView>('menu');
   const [complaintText, setComplaintText] = useState('');
@@ -91,6 +93,18 @@ const HelpdeskCard: React.FC = () => {
       color: 'bg-orange-100 text-orange-600',
     }
   ];
+
+  const activeServices = subServices.map(s => {
+    const overrideSource = config.helpdesk.services.find(x => x.id === s.id);
+    const enabled = overrideSource ? overrideSource.enabled : true;
+    const ov = overrideSource?.titleOverride;
+    const titleOverrideStr = language === 'bn' ? ov?.bn : ov?.en;
+    return {
+      ...s,
+      enabled,
+      title: titleOverrideStr?.trim() ? titleOverrideStr : s.title,
+    };
+  }).filter(s => s.enabled);
 
   const renderModalContent = () => {
     switch (activeView) {
@@ -199,7 +213,7 @@ const HelpdeskCard: React.FC = () => {
       default:
         return (
           <div className="space-y-3">
-            {subServices.map((service) => (
+            {activeServices.map((service) => (
               <button 
                 key={service.id}
                 onClick={() => handleAction(service.id)}

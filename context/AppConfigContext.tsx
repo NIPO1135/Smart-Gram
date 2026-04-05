@@ -84,6 +84,18 @@ export interface BloodConfig {
   requests: BloodRequestConfig[];
 }
 
+export type HelpdeskServiceId = 'complaint' | 'info' | 'govt' | 'volunteer' | 'links';
+
+export interface HelpdeskSubServiceConfig {
+  id: HelpdeskServiceId;
+  enabled: boolean;
+  titleOverride?: LocalizedText;
+}
+
+export interface HelpdeskConfig {
+  services: HelpdeskSubServiceConfig[];
+}
+
 export interface AppConfig {
   schemaVersion: 2;
   notices: LocalizedText;
@@ -92,6 +104,7 @@ export interface AppConfig {
   handmadeProducts: HandmadeProductConfig[];
   popularProducts: PopularProductConfig[];
   blood: BloodConfig;
+  helpdesk: HelpdeskConfig;
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
@@ -101,6 +114,15 @@ const DEFAULT_CONFIG: AppConfig = {
   notices: {
     bn: 'গ্রামের সরকারি হাসপাতালে আগামী শুক্রবার বিনামূল্যে রক্ত পরীক্ষা করা হবে। | নতুন সার ভর্তুকির জন্য ইউনিয়ন পরিষদে যোগাযোগ করুন। | খেলাধুলা ক্লাবের পক্ষ থেকে আগামী রোববার ফুটবল টুনামেন্ট আয়োজন করা হবে।',
     en: 'Free blood checkups at the village government hospital next Friday. | Contact Union Parishad for new fertilizer subsidies. | Football tournament organized by the Sports Club this Sunday.',
+  },
+  helpdesk: {
+    services: [
+      { id: 'complaint', enabled: true },
+      { id: 'info', enabled: true },
+      { id: 'govt', enabled: true },
+      { id: 'volunteer', enabled: true },
+      { id: 'links', enabled: true },
+    ],
   },
   dashboardCards: [
     {
@@ -581,6 +603,10 @@ function loadConfig(): AppConfig {
     isRecord((stored as any).blood) && (stored as any).blood
       ? ((stored as any).blood as BloodConfig)
       : DEFAULT_CONFIG.blood;
+  const helpdesk =
+    isRecord((stored as any).helpdesk) && (stored as any).helpdesk
+      ? ((stored as any).helpdesk as HelpdeskConfig)
+      : DEFAULT_CONFIG.helpdesk;
 
   return {
     schemaVersion: 2,
@@ -590,6 +616,7 @@ function loadConfig(): AppConfig {
     handmadeProducts,
     popularProducts,
     blood,
+    helpdesk,
   };
 }
 

@@ -13,7 +13,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Users,
-  Heart
+  Heart,
+  User
 } from 'lucide-react';
 
 interface Donor {
@@ -25,6 +26,7 @@ interface Donor {
   last_donation?: string;
   lastDonation?: string;
   phone: string;
+  image?: string;
 }
 
 const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -91,15 +93,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bloodGroup: formData.get('bloodGroup'),
-          phone: formData.get('phone'),
-          location: formData.get('location'),
-          lastDonation: formData.get('lastDonation'),
-        }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -233,8 +227,17 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   className="bg-gradient-to-br from-white to-red-50/50 border-2 border-red-100 rounded-[2.5rem] p-6 shadow-md hover:shadow-xl transition-all flex items-center justify-between group"
                 >
                   <div className="flex items-center space-x-5 flex-1">
-                    <div className="bg-gradient-to-br from-red-600 to-rose-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl shadow-xl shadow-red-600/30 group-hover:scale-110 transition-transform">
-                      {donor.blood_group}
+                    <div className="bg-gradient-to-br from-red-600 to-rose-600 text-white w-16 h-16 rounded-3xl flex items-center justify-center font-black text-xl shadow-xl shadow-red-600/30 group-hover:scale-110 transition-transform overflow-hidden relative">
+                      {donor.image ? (
+                        <img src={donor.image} alt={donor.name} className="w-full h-full object-cover" />
+                      ) : (
+                        donor.blood_group
+                      )}
+                      {donor.image && (
+                         <div className="absolute bottom-0 right-0 bg-red-600/90 backdrop-blur-sm text-[10px] font-black px-2 py-0.5 rounded-tl-lg">
+                           {donor.blood_group}
+                         </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <h4 className="font-black text-gray-800 text-lg leading-none mb-2">{donor.name}</h4>
@@ -324,6 +327,22 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       <p className="text-red-700 text-sm">{regError}</p>
                     </div>
                   )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1 flex items-center">
+                        <User className="w-3 h-3 mr-1 text-red-500" />
+                        {language === 'bn' ? 'রক্তদাতার নাম' : 'Donor Name'}
+                      </label>
+                      <input name="name" type="text" className="w-full p-4 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" placeholder={language === 'bn' ? 'আপনার নাম লিখুন' : 'Enter your name'} required />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-700 ml-1 flex items-center">
+                        <User className="w-3 h-3 mr-1 text-red-500" />
+                        {language === 'bn' ? 'ছবি (ঐচ্ছিক)' : 'Photo (Optional)'}
+                      </label>
+                      <input name="image" type="file" accept="image/*" className="w-full p-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/20 focus:border-red-400 shadow-sm" />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-700 ml-1 flex items-center">
