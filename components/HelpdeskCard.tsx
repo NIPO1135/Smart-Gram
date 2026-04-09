@@ -14,7 +14,8 @@ import {
   ArrowLeft,
   Camera,
   Send,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 type SubView = 'menu' | 'complaint' | 'info' | 'volunteer' | 'success';
@@ -212,24 +213,30 @@ const HelpdeskCard: React.FC = () => {
         );
       default:
         return (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {activeServices.map((service) => (
-              <button 
+              <article
                 key={service.id}
-                onClick={() => handleAction(service.id)}
-                className="w-full flex items-center justify-between p-5 rounded-[1.8rem] border border-gray-50 hover:border-green-100 hover:bg-green-50/30 transition-all group"
+                className="relative overflow-hidden rounded-[1.8rem] border border-white/70 bg-white/90 shadow-sm hover:shadow-lg transition-all group"
               >
-                <div className="flex items-center space-x-5">
-                  <div className={`${service.color} p-4 rounded-2xl transition-transform group-hover:scale-110 shadow-sm flex items-center justify-center`}>
-                    <service.icon className="w-6 h-6" />
+                <div className="absolute -top-10 -right-10 w-28 h-28 bg-emerald-100/60 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500" />
+                <div className="relative p-5">
+                  <div className={`${service.color} w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <service.icon className="w-5 h-5" />
                   </div>
-                  <div className="text-left">
-                    <h4 className="font-black text-gray-800 text-base leading-tight">{service.title}</h4>
-                    <p className="text-[11px] text-gray-400 font-bold mt-1 uppercase tracking-tight">{service.desc}</p>
-                  </div>
+                  <h4 className="font-black text-gray-800 text-base leading-tight">{service.title}</h4>
+                  <p className="text-[11px] text-gray-500 font-bold mt-2 uppercase tracking-tight">{service.desc}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleAction(service.id)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[11px] font-black uppercase tracking-wide text-emerald-700 hover:bg-emerald-100 transition-colors"
+                  >
+                    Open
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="mt-3 h-1.5 w-16 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 opacity-70" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:translate-x-1 group-hover:text-green-500 transition-all" />
-              </button>
+              </article>
             ))}
           </div>
         );
@@ -241,7 +248,7 @@ const HelpdeskCard: React.FC = () => {
       {/* Trigger Card */}
       <div 
         onClick={() => { setIsOpen(true); setActiveView('menu'); }}
-        className="bg-white border border-green-50 rounded-[2.5rem] p-6 sm:p-8 shadow-xl shadow-green-900/5 col-span-full cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition-all group relative overflow-hidden"
+        className="bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-emerald-900/30 col-span-full cursor-pointer hover:shadow-emerald-900/40 hover:-translate-y-1 transition-all group relative overflow-hidden"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -251,19 +258,24 @@ const HelpdeskCard: React.FC = () => {
           }
         }}
       >
-        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-40 h-40 bg-green-50 rounded-full group-hover:scale-125 transition-transform duration-700"></div>
+        <div className="absolute -top-12 -right-10 w-48 h-48 bg-white/15 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+        <div className="absolute -bottom-16 -left-12 w-56 h-56 bg-emerald-300/20 rounded-full blur-3xl"></div>
         
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center space-x-4 sm:space-x-6">
-            <div className="bg-green-600 p-4 rounded-3xl shadow-lg shadow-green-600/30 group-hover:rotate-12 transition-transform">
+            <div className="bg-white/20 backdrop-blur-md border border-white/30 p-4 rounded-3xl shadow-lg group-hover:rotate-12 transition-transform">
               <Headphones className="text-white w-7 h-7" />
             </div>
             <div className="pr-4">
-              <h2 className="text-xl sm:text-2xl font-black text-green-900 leading-tight">{t.helpdesk}</h2>
-              <p className="text-[11px] sm:text-xs text-green-600 font-black uppercase tracking-widest mt-0.5">{t.helpdeskDesc}</p>
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                Premium Service Hub
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">{t.helpdesk}</h2>
+              <p className="text-[11px] sm:text-xs text-emerald-100 font-black uppercase tracking-widest mt-0.5">{t.helpdeskDesc}</p>
             </div>
           </div>
-          <div className="flex-shrink-0 bg-green-100 p-3 rounded-2xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-all">
+          <div className="flex-shrink-0 bg-white/20 backdrop-blur-md border border-white/30 p-3 rounded-2xl text-white group-hover:bg-white group-hover:text-emerald-600 transition-all">
             <ChevronRight className="w-5 h-5" />
           </div>
         </div>
@@ -277,9 +289,9 @@ const HelpdeskCard: React.FC = () => {
             onClick={handleClose}
           ></div>
           
-          <div className="bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in slide-in-from-bottom-10 duration-300">
+          <div className="bg-white/95 backdrop-blur-xl w-full max-w-2xl max-h-[92vh] rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl relative z-10 overflow-hidden animate-in slide-in-from-bottom-10 duration-300 border border-white/60 flex flex-col">
             {/* Modal Header */}
-            <div className="px-8 pt-8 pb-4 flex items-center justify-between border-b border-gray-50">
+            <div className="px-8 pt-8 pb-5 flex items-center justify-between border-b border-emerald-50 bg-gradient-to-r from-emerald-50/70 to-white shrink-0">
               <div className="flex items-center space-x-3">
                 {activeView !== 'menu' && activeView !== 'success' && (
                   <button 
@@ -301,7 +313,7 @@ const HelpdeskCard: React.FC = () => {
                     <span className="text-sm font-bold text-gray-600 group-hover:text-green-600 hidden sm:block">{t.back}</span>
                   </button>
                 )}
-                <span className="font-black text-gray-400 uppercase tracking-[0.2em] text-[10px]">
+                <span className="font-black text-emerald-600 uppercase tracking-[0.2em] text-[10px]">
                   {activeView === 'menu' ? t.helpdesk : activeView === 'success' ? t.successTitle : ''}
                 </span>
               </div>
@@ -315,13 +327,13 @@ const HelpdeskCard: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="p-8 max-h-[70vh] sm:max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="p-8 flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-gradient-to-b from-white to-emerald-50/30">
               {renderModalContent()}
             </div>
 
-            <div className="px-8 pb-8 text-center">
-              <p className="text-[9px] text-gray-300 font-black uppercase tracking-widest">
-                Service Hub v3.1
+            <div className="px-8 pb-8 text-center shrink-0">
+              <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest">
+                Premium Helpdesk Suite
               </p>
             </div>
           </div>

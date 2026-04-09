@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, LayoutGrid, Bell, PhoneCall, ShoppingBag, Droplet, Headphones, Star, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { AppConfig, DEFAULT_APP_CONFIG, useAppConfig } from '../context/AppConfigContext';
@@ -21,6 +21,10 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [activeView, setActiveView] = useState<AdminView>('home');
+
+  useEffect(() => {
+    setDraft(config);
+  }, [config]);
 
   const labels = useMemo(() => {
     return {

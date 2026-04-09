@@ -1,20 +1,20 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { GoogleGenAI, Type } from '@google/genai';
+import KrishiShebaSection from '../components/KrishiShebaSection';
+import DailyFarmingTipCard from '../components/DailyFarmingTipCard';
+import PestIdentificationGallery from '../components/PestIdentificationGallery';
 import { 
   ArrowLeft, 
   Sprout, 
   Camera, 
-  CloudRain, 
-  Thermometer, 
   Loader2, 
-  Send,
-  Mic,
-  MessageSquare,
-  AlertCircle,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Search,
+  Leaf,
+  CalendarRange,
+  BookOpenText
 } from 'lucide-react';
 
 interface AnalysisResult {
@@ -23,62 +23,86 @@ interface AnalysisResult {
   solution: string;
 }
 
-interface Message {
-  role: 'user' | 'ai';
-  text: string;
+interface FarmingTip {
+  id: string;
+  cropName: string;
+  season: string;
+  description: string;
 }
+
+const AI_DIAGNOSIS_API_URL = 'http://localhost:5000/api/ai/plant-diagnosis';
 
 const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
+  const farmingTips: FarmingTip[] = [
+    {
+      id: 'tip-1',
+      cropName: 'ধান',
+      season: language === 'bn' ? 'বর্ষা' : 'Monsoon',
+      description:
+        language === 'bn'
+          ? 'চারার বয়স 20-25 দিন হলে রোপণ করুন এবং জমিতে 2-3 সেমি পানি ধরে রাখুন।'
+          : 'Transplant seedlings at 20-25 days and keep 2-3 cm standing water in the field.',
+    },
+    {
+      id: 'tip-2',
+      cropName: 'গম',
+      season: language === 'bn' ? 'শীত' : 'Winter',
+      description:
+        language === 'bn'
+          ? 'জমি ভালোভাবে ঝুরঝুরে করে বপন করুন এবং আগাছা 20 দিনের মধ্যে পরিষ্কার করুন।'
+          : 'Prepare fine soil before sowing and remove weeds within the first 20 days.',
+    },
+    {
+      id: 'tip-3',
+      cropName: 'আলু',
+      season: language === 'bn' ? 'শীত' : 'Winter',
+      description:
+        language === 'bn'
+          ? 'বীজ আলু কাটার পর ছায়ায় শুকিয়ে রোপণ করুন, জমিতে পানি জমতে দেবেন না।'
+          : 'Dry seed potato pieces in shade before planting and avoid waterlogging.',
+    },
+    {
+      id: 'tip-4',
+      cropName: 'টমেটো',
+      season: language === 'bn' ? 'শীত' : 'Winter',
+      description:
+        language === 'bn'
+          ? 'সুষম সার ব্যবহার করুন এবং গাছে খুঁটি দিন যাতে ফল মাটিতে না লাগে।'
+          : 'Use balanced fertilizer and support plants with stakes to protect fruits.',
+    },
+    {
+      id: 'tip-5',
+      cropName: 'পেঁয়াজ',
+      season: language === 'bn' ? 'রবি' : 'Rabi',
+      description:
+        language === 'bn'
+          ? 'পাতা হলদে হওয়া শুরু করলে সেচ কমিয়ে দিন, তারপর তুলুন ও শুকান।'
+          : 'Reduce irrigation when leaves turn yellow, then harvest and cure properly.',
+    },
+  ];
   
-  // Weather State
-  const [weatherAdvice, setWeatherAdvice] = useState<string>("");
-  const [isWeatherLoading, setIsWeatherLoading] = useState(true);
+  const [tipSearch, setTipSearch] = useState('');
 
   // Diagnosis State
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Chat State
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchWeatherAdvice();
-  }, [language]);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const fetchWeatherAdvice = async () => {
-    setIsWeatherLoading(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Act as a senior agricultural officer in Bangladesh. It's a typical day (temp 31°C, partially cloudy). Give a 1-sentence helpful weather-related advice for a farmer in ${language === 'bn' ? 'Bengali' : 'English'}. For example: "আজ বৃষ্টির সম্ভাবনা আছে, ফসল দ্রুত ঘরে তুলুন" if relevant.`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-      });
-      setWeatherAdvice(response.text || "");
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsWeatherLoading(false);
-    }
-  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        setAnalysisError(language === 'bn' ? 'শুধু ছবি ফাইল নির্বাচন করুন।' : 'Please select an image file.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        analyzePlant(reader.result as string);
+        const dataUrl = reader.result as string;
+        setSelectedImage(dataUrl);
+        analyzePlant(dataUrl);
       };
       reader.readAsDataURL(file);
     }
@@ -86,68 +110,65 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const analyzePlant = async (base64Image: string) => {
     setIsAnalyzing(true);
+    setAnalysisError(null);
     setAnalysisResult(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Analyze this plant leaf image. Identify any disease. Respond in ${language === 'bn' ? 'Bengali' : 'English'}. Return only a JSON object with keys: diseaseName, symptoms, and solution.`;
-      const imagePart = { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } };
-      
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [{ parts: [imagePart, { text: prompt }] }],
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              diseaseName: { type: Type.STRING },
-              symptoms: { type: Type.STRING },
-              solution: { type: Type.STRING },
-            },
-            required: ["diseaseName", "symptoms", "solution"],
-          },
-        },
+      const [mimePrefix, dataPart] = base64Image.split(',');
+      if (!mimePrefix || !dataPart) {
+        throw new Error(language === 'bn' ? 'ছবির ডাটা সঠিক নয়।' : 'Invalid image data.');
+      }
+
+      const response = await fetch(AI_DIAGNOSIS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageData: base64Image,
+          language,
+        }),
       });
-      setAnalysisResult(JSON.parse(response.text || '{}') as AnalysisResult);
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          language === 'bn'
+            ? 'রোগ বিশ্লেষণ সার্ভিসে সমস্যা হয়েছে।'
+            : 'Plant diagnosis service failed.',
+        );
+      }
+
+      if (!data?.result) {
+        throw new Error(language === 'bn' ? 'AI response ফরম্যাট ভুল।' : 'Invalid AI response format.');
+      }
+
+      setAnalysisResult(data.result as AnalysisResult);
     } catch (error) {
       console.error(error);
+      setAnalysisError(
+        error instanceof Error
+          ? error.message
+          : language === 'bn'
+            ? 'রোগ বিশ্লেষণ করা যায়নি। আবার চেষ্টা করুন।'
+            : 'Could not analyze disease. Please try again.',
+      );
     } finally {
       setIsAnalyzing(false);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
-    
-    const userText = inputText;
-    setInputText("");
-    setMessages(prev => [...prev, { role: 'user', text: userText }]);
-    setIsThinking(true);
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: userText,
-        config: {
-          systemInstruction: `You are a professional agricultural expert advisor for rural farmers in Bangladesh. 
-          Provide helpful, accurate, and concise advice on farming, crops, and pest control. 
-          Respond in ${language === 'bn' ? 'Bengali' : 'English'}. 
-          Always be encouraging and practical.`,
-        },
-      });
-      setMessages(prev => [...prev, { role: 'ai', text: response.text || "" }]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsThinking(false);
     }
   };
 
   const clearAnalysis = () => {
     setSelectedImage(null);
     setAnalysisResult(null);
+    setAnalysisError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
+
+  const filteredFarmingTips = farmingTips.filter((tip) => {
+    const normalizedQuery = tipSearch.trim();
+    if (!normalizedQuery) return true;
+    return tip.cropName.includes(normalizedQuery);
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32 flex flex-col animate-in fade-in duration-500">
@@ -160,34 +181,67 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
 
       <div className="p-4 space-y-6 max-w-2xl mx-auto w-full flex-1">
-        
-        {/* 1. Top: AI Weather Advisor */}
-        <section className="bg-gradient-to-br from-green-600 to-green-700 rounded-[2.5rem] p-6 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-6 -mt-6 opacity-10">
-            <CloudRain className="w-32 h-32" />
+        <KrishiShebaSection />
+        <DailyFarmingTipCard />
+        <PestIdentificationGallery />
+
+        {/* Farming Tips List */}
+        <section className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-emerald-50">
+          <div className="flex items-center space-x-3 mb-5">
+            <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+              <BookOpenText className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-gray-800 leading-none">
+                {language === 'bn' ? 'কৃষি পরামর্শ তালিকা' : 'Farming Tips List'}
+              </h3>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                {language === 'bn' ? 'ফসলের নাম দিয়ে খুঁজুন' : 'Search by crop name'}
+              </p>
+            </div>
           </div>
-          <div className="relative z-10">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-black uppercase tracking-widest opacity-80">{t.weatherAdvisor}</h3>
-              <Thermometer className="w-5 h-5 text-green-300" />
+
+          <div className="mb-5">
+            <div className="flex items-center bg-gray-50 border border-gray-200 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-emerald-500">
+              <Search className="w-4 h-4 text-gray-400 mr-2" />
+              <input
+                type="text"
+                value={tipSearch}
+                onChange={(e) => setTipSearch(e.target.value)}
+                placeholder={language === 'bn' ? 'যেমন: ধান, গম, আলু' : 'e.g. ধান, গম, আলু'}
+                className="w-full bg-transparent outline-none border-none text-sm font-semibold text-gray-700"
+              />
             </div>
-            <div className="flex items-center space-x-4 mb-4">
-              <span className="text-5xl font-black">31°C</span>
-              <div className="h-10 w-[1px] bg-white/20"></div>
-              <p className="text-sm font-bold opacity-90">{language === 'bn' ? 'আংশিক মেঘলা' : 'Partly Cloudy'}</p>
-            </div>
-            <div className="bg-white/10 rounded-2xl p-4 border border-white/20 backdrop-blur-md">
-              <p className="text-[10px] font-black uppercase tracking-widest text-green-200 mb-1">{t.weatherAdviceLabel}</p>
-              {isWeatherLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <p className="text-sm font-bold leading-relaxed">"{weatherAdvice}"</p>
-              )}
-            </div>
+          </div>
+
+          <div className="space-y-3">
+            {filteredFarmingTips.length === 0 ? (
+              <div className="text-center py-6 bg-amber-50 rounded-2xl border border-amber-100">
+                <p className="text-sm font-bold text-amber-700">
+                  {language === 'bn' ? 'এই নামে কোনো পরামর্শ পাওয়া যায়নি।' : 'No tips found for this crop name.'}
+                </p>
+              </div>
+            ) : (
+              filteredFarmingTips.map((tip) => (
+                <div key={tip.id} className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Leaf className="w-4 h-4 text-emerald-600" />
+                      <h4 className="text-base font-black text-emerald-900">{tip.cropName}</h4>
+                    </div>
+                    <div className="flex items-center gap-1 text-emerald-700 bg-white/70 px-2 py-1 rounded-xl border border-emerald-100">
+                      <CalendarRange className="w-3.5 h-3.5" />
+                      <span className="text-[11px] font-black uppercase tracking-wider">{tip.season}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700 leading-relaxed">{tip.description}</p>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
-        {/* 2. Middle: AI Plant Diagnosis */}
+        {/* AI Plant Diagnosis */}
         <section className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-green-50">
           <div className="flex items-center space-x-3 mb-6">
             <div className="bg-green-100 p-3 rounded-2xl text-green-600">
@@ -229,6 +283,12 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
               )}
 
+              {analysisError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm font-bold text-red-700">{analysisError}</p>
+                </div>
+              )}
+
               {analysisResult && (
                 <div className="bg-white border border-green-100 rounded-[2rem] p-6 space-y-5 animate-in slide-in-from-top-4 duration-500">
                   <div className="flex items-center space-x-2 text-green-600">
@@ -255,80 +315,7 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           )}
         </section>
 
-        {/* 3. Bottom: Expert Connect (Messenger Style) */}
-        <section className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col h-[500px]">
-          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-green-600 p-2 rounded-xl text-white">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-black text-gray-800">{t.expertConnect}</h3>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-[9px] font-black text-green-600 uppercase tracking-widest">Live Advisor</span>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-            {messages.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center opacity-20 text-center px-10">
-                <MessageSquare className="w-12 h-12 mb-4" />
-                <p className="text-xs font-black uppercase tracking-widest">{t.typeProblemPlaceholder}</p>
-              </div>
-            )}
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-5 py-4 rounded-[1.8rem] text-sm leading-relaxed shadow-sm ${
-                  msg.role === 'user' 
-                  ? 'bg-green-600 text-white rounded-br-none' 
-                  : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'
-                }`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isThinking && (
-              <div className="flex justify-start">
-                <div className="bg-gray-50 text-gray-400 px-5 py-3 rounded-2xl flex items-center space-x-2">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">{t.thinking}</span>
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-gray-50 border-t border-gray-100">
-            <div className="flex items-center space-x-2 bg-white rounded-2xl p-2 border border-gray-200 focus-within:ring-2 focus-within:ring-green-500 transition-all shadow-sm">
-              <button className="p-2 text-gray-400 hover:text-green-600 transition-colors">
-                <Mic className="w-5 h-5" />
-              </button>
-              <input 
-                type="text" 
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder={t.typeProblemPlaceholder}
-                className="flex-1 bg-transparent border-none focus:ring-0 outline-none px-2 text-sm font-medium"
-              />
-              <button 
-                onClick={handleSendMessage}
-                disabled={!inputText.trim() || isThinking}
-                className="bg-green-600 text-white p-3 rounded-xl shadow-lg shadow-green-600/20 active:scale-90 transition-all disabled:opacity-30"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
       </div>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 };

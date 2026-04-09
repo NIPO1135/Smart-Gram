@@ -3,10 +3,9 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { KeyRound, Phone, Mail, Shield, LogOut, Edit3, ChevronRight, Camera, X, Save, Settings, User } from 'lucide-react';
-import { ADMIN_PROMOTION_PIN } from '../config/admin';
 
 const Profile: React.FC<{ onOpenAdmin?: () => void }> = ({ onOpenAdmin }) => {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, promoteToAdmin } = useAuth();
   const { t, language } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAdminPinOpen, setIsAdminPinOpen] = useState(false);
@@ -57,13 +56,13 @@ const Profile: React.FC<{ onOpenAdmin?: () => void }> = ({ onOpenAdmin }) => {
     setIsAdminPinOpen(true);
   };
 
-  const handleAdminPinSubmit = () => {
+  const handleAdminPinSubmit = async () => {
     setAdminPinError(null);
-    if (adminPin.trim() !== ADMIN_PROMOTION_PIN) {
+    const success = await promoteToAdmin(adminPin.trim());
+    if (!success) {
       setAdminPinError(language === 'bn' ? 'ভুল পিন' : 'Invalid PIN');
       return;
     }
-    updateUser({ role: 'admin' });
     setIsAdminPinOpen(false);
   };
 

@@ -8,6 +8,9 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const bloodbankRoutes = require('./routes/bloodbank');
 const marketRoutes = require('./routes/market');
+const appConfigRoutes = require('./routes/appConfig');
+const noticeRoutes = require('./routes/notices');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 
@@ -26,6 +29,9 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/bloodbank', bloodbankRoutes);
 app.use('/api/market', marketRoutes);
+app.use('/api/app-config', appConfigRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Database connection
 const PORT = process.env.PORT || 5000;

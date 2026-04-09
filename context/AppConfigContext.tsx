@@ -108,6 +108,19 @@ export interface AppConfig {
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
+const API_BASE_URL = 'http://localhost:5000/api/app-config';
+const AUTH_SESSION_KEY = 'auth_session';
+
+function getAuthHeader(): string | null {
+  const raw = localStorage.getItem(AUTH_SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.token === 'string' ? parsed.token : null;
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_CONFIG: AppConfig = {
   schemaVersion: 2,
@@ -581,31 +594,30 @@ function mergeDashboardCards(raw: unknown, defaults: DashboardCardConfig[]): Das
     .map((id) => coerceDashboardCard(storedById.get(id), defaultById.get(id)!));
 }
 
-function loadConfig(): AppConfig {
-  const stored = readLocalStorageJson<unknown>(STORAGE_KEY);
-  if (!isRecord(stored)) return DEFAULT_CONFIG;
+function coerceAppConfig(raw: unknown): AppConfig {
+  if (!isRecord(raw)) return DEFAULT_CONFIG;
 
-  const notices = coerceLocalizedText(stored.notices, DEFAULT_CONFIG.notices);
-  const dashboardCards = mergeDashboardCards(stored.dashboardCards, DEFAULT_CONFIG.dashboardCards);
+  const notices = coerceLocalizedText(raw.notices, DEFAULT_CONFIG.notices);
+  const dashboardCards = mergeDashboardCards(raw.dashboardCards, DEFAULT_CONFIG.dashboardCards);
   const emergencyCategories =
-    Array.isArray((stored as any).emergencyCategories) && (stored as any).emergencyCategories.length
-      ? ((stored as any).emergencyCategories as EmergencyCategoryConfig[])
+    Array.isArray((raw as any).emergencyCategories) && (raw as any).emergencyCategories.length
+      ? ((raw as any).emergencyCategories as EmergencyCategoryConfig[])
       : DEFAULT_CONFIG.emergencyCategories;
   const handmadeProducts =
-    Array.isArray((stored as any).handmadeProducts) && (stored as any).handmadeProducts.length
-      ? ((stored as any).handmadeProducts as HandmadeProductConfig[])
+    Array.isArray((raw as any).handmadeProducts) && (raw as any).handmadeProducts.length
+      ? ((raw as any).handmadeProducts as HandmadeProductConfig[])
       : DEFAULT_CONFIG.handmadeProducts;
   const popularProducts =
-    Array.isArray((stored as any).popularProducts) && (stored as any).popularProducts.length
-      ? ((stored as any).popularProducts as PopularProductConfig[])
+    Array.isArray((raw as any).popularProducts) && (raw as any).popularProducts.length
+      ? ((raw as any).popularProducts as PopularProductConfig[])
       : DEFAULT_CONFIG.popularProducts;
   const blood =
-    isRecord((stored as any).blood) && (stored as any).blood
-      ? ((stored as any).blood as BloodConfig)
+    isRecord((raw as any).blood) && (raw as any).blood
+      ? ((raw as any).blood as BloodConfig)
       : DEFAULT_CONFIG.blood;
   const helpdesk =
-    isRecord((stored as any).helpdesk) && (stored as any).helpdesk
-      ? ((stored as any).helpdesk as HelpdeskConfig)
+    isRecord((raw as any).helpdesk) && (raw as any).helpdesk
+      ? ((raw as any).helpdesk as HelpdeskConfig)
       : DEFAULT_CONFIG.helpdesk;
 
   return {
@@ -620,6 +632,11 @@ function loadConfig(): AppConfig {
   };
 }
 
+function loadConfig(): AppConfig {
+  const stored = readLocalStorageJson<unknown>(STORAGE_KEY);
+  return coerceAppConfig(stored);
+}
+
 interface AppConfigContextType {
   config: AppConfig;
   setConfig: (next: AppConfig) => void;
@@ -630,10 +647,54 @@ const AppConfigContext = createContext<AppConfigContextType | undefined>(undefin
 
 export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
+  const [hasLoadedRemoteConfig, setHasLoadedRemoteConfig] = useState(false);
+
+  useEffect(() => {
+    const fetchRemoteConfig = async () => {
+      try {
+        const token = getAuthHeader();
+        const response = await fetch(API_BASE_URL, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const data = await response.json();
+        if (response.ok && data?.config) {
+          setConfig(coerceAppConfig(data.config));
+        }
+      } catch {
+        // Keep localStorage/default config when backend is unreachable.
+      } finally {
+        setHasLoadedRemoteConfig(true);
+      }
+    };
+
+    fetchRemoteConfig();
+  }, []);
 
   useEffect(() => {
     writeLocalStorageJson(STORAGE_KEY, config);
-  }, [config]);
+
+    if (!hasLoadedRemoteConfig) return;
+
+    const saveRemoteConfig = async () => {
+      try {
+        const token = getAuthHeader();
+        if (!token) return;
+
+        await fetch(API_BASE_URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ config }),
+        });
+      } catch {
+        // Silently ignore network errors; localStorage remains source of truth offline.
+      }
+    };
+
+    saveRemoteConfig();
+  }, [config, hasLoadedRemoteConfig]);
 
   const value = useMemo<AppConfigContextType>(() => {
     return {
