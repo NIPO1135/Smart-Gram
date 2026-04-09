@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Milk, Egg, MessageCircle } from 'lucide-react';
+import { Milk, Egg, Fish, Drumstick, MessageCircle } from 'lucide-react';
 import { useAppConfig, PopularProductIconKey } from '../context/AppConfigContext';
 
 interface Product {
   id: string;
   name: string;
   icon: React.ElementType;
+  image?: string;
   color: string;
   price: string;
   unit: string;
@@ -27,7 +28,11 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
     <div className="flex-shrink-0 w-44 bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all snap-start flex flex-col">
       {/* Product Image Placeholder */}
       <div className={`${product.color} w-full h-28 rounded-2xl flex items-center justify-center mb-4 relative overflow-hidden group`}>
-        <product.icon className="w-12 h-12 relative z-10 transition-transform duration-500 group-hover:scale-110" />
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        ) : (
+          <product.icon className="w-12 h-12 relative z-10 transition-transform duration-500 group-hover:scale-110" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-50"></div>
       </div>
       
@@ -63,6 +68,8 @@ const PopularProducts: React.FC = () => {
   const ICONS: Record<PopularProductIconKey, React.ElementType> = {
     Milk,
     Egg,
+    Fish,
+    Meat: Drumstick,
   };
 
   const products: Product[] = config.popularProducts
@@ -71,6 +78,7 @@ const PopularProducts: React.FC = () => {
       id: p.id,
       name: t[p.id as keyof typeof t] ?? (p.name.en || p.name.bn),
       icon: ICONS[p.iconKey],
+      image: p.image,
       color: p.color,
       price: p.price,
       unit: p.unit.en || p.unit.bn,

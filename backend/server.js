@@ -11,6 +11,7 @@ const marketRoutes = require('./routes/market');
 const appConfigRoutes = require('./routes/appConfig');
 const noticeRoutes = require('./routes/notices');
 const aiRoutes = require('./routes/ai');
+const uploadRoutes = require('./routes/uploads');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/market', marketRoutes);
 app.use('/api/app-config', appConfigRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Database connection
 const PORT = process.env.PORT || 5000;

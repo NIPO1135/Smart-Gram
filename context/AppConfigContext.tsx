@@ -45,13 +45,14 @@ export interface HandmadeProductConfig {
   image: string;
 }
 
-export type PopularProductIconKey = 'Milk' | 'Egg';
+export type PopularProductIconKey = 'Milk' | 'Egg' | 'Fish' | 'Meat';
 
 export interface PopularProductConfig {
   id: string;
   enabled: boolean;
   name: LocalizedText;
   iconKey: PopularProductIconKey;
+  image?: string;
   color: string;
   price: string;
   unit: LocalizedText;

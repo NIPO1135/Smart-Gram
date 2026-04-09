@@ -1,22 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AdminSubViewProps } from './types';
 import { Save, ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
-import { PopularProductConfig, PopularProductIconKey } from '../../context/AppConfigContext';
-
-const POPULAR_ICON_OPTIONS: { key: PopularProductIconKey; label: string }[] = [
-  { key: 'Milk', label: 'Milk' },
-  { key: 'Egg', label: 'Egg' },
-  { key: 'Fish', label: 'Fish' },
-  { key: 'Meat', label: 'Meat' },
-];
+import { PopularProductConfig } from '../../context/AppConfigContext';
 
 const AdminPopularProducts: React.FC<AdminSubViewProps> = ({ draft, setDraft, language, labels, onSave, onBack }) => {
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+
   const updateProduct = (idx: number, patch: Partial<PopularProductConfig>) => {
     setDraft(prev => {
       const next = [...prev.popularProducts];
       next[idx] = { ...next[idx], ...patch };
       return { ...prev, popularProducts: next };
     });
+  };
+
+  const handleImageUpload = async (idx: number, file: File) => {
+    try {
+      setUploadingId(draft.popularProducts[idx].id);
+      const rawSession = localStorage.getItem('auth_session');
+      const token = rawSession ? JSON.parse(rawSession)?.token : null;
+      if (!token) {
+        window.alert(language === 'bn' ? 'লগইন সেশন পাওয়া যায়নি। আবার লগইন করুন।' : 'Missing login session. Please login again.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('http://localhost:5000/api/uploads/image', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.imageUrl) {
+        throw new Error(data?.message || 'Upload failed');
+      }
+
+      updateProduct(idx, { image: data.imageUrl });
+    } catch (error) {
+      console.error(error);
+      window.alert(language === 'bn' ? 'ছবি আপলোড করা যায়নি।' : 'Image upload failed.');
+    } finally {
+      setUploadingId(null);
+    }
   };
 
   const addProduct = () => {
@@ -26,6 +56,7 @@ const AdminPopularProducts: React.FC<AdminSubViewProps> = ({ draft, setDraft, la
         enabled: true,
         name: { bn: 'নতুন পণ্য', en: 'New Product' },
         iconKey: 'Milk',
+        image: '',
         color: 'bg-blue-100 text-blue-600',
         price: '0',
         unit: { bn: 'কেজি', en: 'kg' }
@@ -91,10 +122,34 @@ const AdminPopularProducts: React.FC<AdminSubViewProps> = ({ draft, setDraft, la
                 <input value={p.unit.en} onChange={(e) => updateProduct(idx, { unit: { ...p.unit, en: e.target.value } })} className="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none text-sm font-bold" />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">{labels.icon}</label>
-                <select value={p.iconKey} onChange={(e) => updateProduct(idx, { iconKey: e.target.value as PopularProductIconKey })} className="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none text-sm font-bold">
-                  {POPULAR_ICON_OPTIONS.map(opt => <option key={opt.key} value={opt.key}>{opt.label}</option>)}
-                </select>
+                <label className="block text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">
+                  {language === 'bn' ? 'ছবির লিংক' : 'Image URL'}
+                </label>
+                <input
+                  value={p.image ?? ''}
+                  onChange={(e) => updateProduct(idx, { image: e.target.value })}
+                  placeholder={language === 'bn' ? 'https://example.com/product.jpg' : 'https://example.com/product.jpg'}
+                  className="w-full p-3 rounded-xl border border-gray-200 bg-white outline-none text-sm font-bold"
+                />
+                <label className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-black uppercase tracking-wide cursor-pointer hover:bg-blue-100 transition-colors">
+                  <PlusCircle className="w-4 h-4" />
+                  {uploadingId === p.id
+                    ? (language === 'bn' ? 'আপলোড হচ্ছে...' : 'Uploading...')
+                    : (language === 'bn' ? 'ডাইরেক্ট ছবি আপলোড' : 'Upload Picture')}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleImageUpload(idx, file);
+                      }
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
+                {!!p.image && <img src={p.image} alt={p.name.en || p.name.bn} className="mt-2 w-full h-24 object-cover rounded-xl border border-gray-200" />}
               </div>
             </div>
           </div>
