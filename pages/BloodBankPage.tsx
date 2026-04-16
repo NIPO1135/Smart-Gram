@@ -42,7 +42,7 @@ const BloodBankPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState('');
 
-  const API_BASE_URL = 'http://localhost:5000/api/bloodbank';
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/bloodbank`;
 
   useEffect(() => {
     setSloganIndex(Math.floor(Math.random() * 3));

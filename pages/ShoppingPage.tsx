@@ -31,7 +31,7 @@ const ShoppingPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/market/products');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/market/products`);
       const data = await response.json();
       if (data.status === 'success') {
         const mapped = data.data.map((p: any) => ({
@@ -81,7 +81,7 @@ const ShoppingPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const formData = new FormData(e.currentTarget);
 
     try {
-      const response = await fetch('http://localhost:5000/api/market/products', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/market/products`, {
         method: 'POST',
         body: formData,
       });

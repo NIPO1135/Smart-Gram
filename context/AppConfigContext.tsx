@@ -134,7 +134,7 @@ export interface AppConfig {
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
-const API_BASE_URL = 'http://localhost:5000/api/app-config';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/app-config`;
 const AUTH_SESSION_KEY = 'auth_session';
 
 function getAuthHeader(): string | null {

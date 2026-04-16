@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppConfig } from '../context/AppConfigContext';
 import { BellRing } from 'lucide-react';
 
-const NOTICE_API_URL = 'http://localhost:5000/api/notices';
+const NOTICE_API_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/notices`;
 
 const NoticeBoard: React.FC = () => {
   const { t, language } = useLanguage();

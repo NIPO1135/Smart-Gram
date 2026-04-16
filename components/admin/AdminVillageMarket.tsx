@@ -12,7 +12,7 @@ const AdminVillageMarket: React.FC<AdminSubViewProps> = ({ draft, setDraft, lang
 
   const fetchBackendProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/market/products');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/market/products`);
       const data = await response.json();
       if (data.status === 'success') {
         setBackendProducts(data.data);
@@ -25,7 +25,7 @@ const AdminVillageMarket: React.FC<AdminSubViewProps> = ({ draft, setDraft, lang
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm(language === 'bn' ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/market/products/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/market/products/${id}`, { method: 'DELETE' });
       if (response.ok) fetchBackendProducts();
     } catch (error) {
       console.error('Error deleting product', error);

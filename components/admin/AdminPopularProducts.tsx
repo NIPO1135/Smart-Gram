@@ -27,7 +27,7 @@ const AdminPopularProducts: React.FC<AdminSubViewProps> = ({ draft, setDraft, la
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await fetch('http://localhost:5000/api/uploads/image', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/uploads/image`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

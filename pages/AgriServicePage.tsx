@@ -24,7 +24,7 @@ interface AnalysisResult {
   solution: string;
 }
 
-const AI_DIAGNOSIS_API_URL = 'http://localhost:5000/api/ai/plant-diagnosis';
+const AI_DIAGNOSIS_API_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/ai/plant-diagnosis`;
 
 const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();

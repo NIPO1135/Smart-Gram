@@ -11,7 +11,7 @@ const AdminBloodBank: React.FC<AdminSubViewProps> = ({ draft, setDraft, language
 
   const fetchBackendDonors = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/bloodbank/donors');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/bloodbank/donors`);
       const data = await response.json();
       if (data.status === 'success') {
         setBackendDonors(data.data);
@@ -24,7 +24,7 @@ const AdminBloodBank: React.FC<AdminSubViewProps> = ({ draft, setDraft, language
   const handleDeleteDonor = async (id: string) => {
     if (!window.confirm(language === 'bn' ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/bloodbank/donors/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/bloodbank/donors/${id}`, { method: 'DELETE' });
       if (response.ok) fetchBackendDonors();
     } catch (error) {
       console.error('Error deleting donor', error);
