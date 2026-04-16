@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import KrishiShebaSection from '../components/KrishiShebaSection';
 import DailyFarmingTipCard from '../components/DailyFarmingTipCard';
 import PestIdentificationGallery from '../components/PestIdentificationGallery';
@@ -23,66 +24,16 @@ interface AnalysisResult {
   solution: string;
 }
 
-interface FarmingTip {
-  id: string;
-  cropName: string;
-  season: string;
-  description: string;
-}
-
 const AI_DIAGNOSIS_API_URL = 'http://localhost:5000/api/ai/plant-diagnosis';
 
 const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
-  const farmingTips: FarmingTip[] = [
-    {
-      id: 'tip-1',
-      cropName: 'ধান',
-      season: language === 'bn' ? 'বর্ষা' : 'Monsoon',
-      description:
-        language === 'bn'
-          ? 'চারার বয়স 20-25 দিন হলে রোপণ করুন এবং জমিতে 2-3 সেমি পানি ধরে রাখুন।'
-          : 'Transplant seedlings at 20-25 days and keep 2-3 cm standing water in the field.',
-    },
-    {
-      id: 'tip-2',
-      cropName: 'গম',
-      season: language === 'bn' ? 'শীত' : 'Winter',
-      description:
-        language === 'bn'
-          ? 'জমি ভালোভাবে ঝুরঝুরে করে বপন করুন এবং আগাছা 20 দিনের মধ্যে পরিষ্কার করুন।'
-          : 'Prepare fine soil before sowing and remove weeds within the first 20 days.',
-    },
-    {
-      id: 'tip-3',
-      cropName: 'আলু',
-      season: language === 'bn' ? 'শীত' : 'Winter',
-      description:
-        language === 'bn'
-          ? 'বীজ আলু কাটার পর ছায়ায় শুকিয়ে রোপণ করুন, জমিতে পানি জমতে দেবেন না।'
-          : 'Dry seed potato pieces in shade before planting and avoid waterlogging.',
-    },
-    {
-      id: 'tip-4',
-      cropName: 'টমেটো',
-      season: language === 'bn' ? 'শীত' : 'Winter',
-      description:
-        language === 'bn'
-          ? 'সুষম সার ব্যবহার করুন এবং গাছে খুঁটি দিন যাতে ফল মাটিতে না লাগে।'
-          : 'Use balanced fertilizer and support plants with stakes to protect fruits.',
-    },
-    {
-      id: 'tip-5',
-      cropName: 'পেঁয়াজ',
-      season: language === 'bn' ? 'রবি' : 'Rabi',
-      description:
-        language === 'bn'
-          ? 'পাতা হলদে হওয়া শুরু করলে সেচ কমিয়ে দিন, তারপর তুলুন ও শুকান।'
-          : 'Reduce irrigation when leaves turn yellow, then harvest and cure properly.',
-    },
-  ];
+  const { config } = useAppConfig();
+  
+  const farmingTips = config.agriculture.tips.filter(c => c.enabled);
   
   const [tipSearch, setTipSearch] = useState('');
+
 
   // Diagnosis State
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -165,9 +116,10 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   const filteredFarmingTips = farmingTips.filter((tip) => {
-    const normalizedQuery = tipSearch.trim();
+    const normalizedQuery = tipSearch.trim().toLowerCase();
     if (!normalizedQuery) return true;
-    return tip.cropName.includes(normalizedQuery);
+    const crop = language === 'bn' ? tip.cropName.bn : tip.cropName.en;
+    return crop.toLowerCase().includes(normalizedQuery);
   });
 
   return (
@@ -193,10 +145,10 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
             <div>
               <h3 className="text-lg font-black text-gray-800 leading-none">
-                {language === 'bn' ? 'কৃষি পরামর্শ তালিকা' : 'Farming Tips List'}
+                {t.farmingTipsList}
               </h3>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                {language === 'bn' ? 'ফসলের নাম দিয়ে খুঁজুন' : 'Search by crop name'}
+                {t.searchCropName}
               </p>
             </div>
           </div>
@@ -208,7 +160,7 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 type="text"
                 value={tipSearch}
                 onChange={(e) => setTipSearch(e.target.value)}
-                placeholder={language === 'bn' ? 'যেমন: ধান, গম, আলু' : 'e.g. ধান, গম, আলু'}
+                placeholder={t.tipSearchPlaceholder}
                 className="w-full bg-transparent outline-none border-none text-sm font-semibold text-gray-700"
               />
             </div>
@@ -218,7 +170,7 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {filteredFarmingTips.length === 0 ? (
               <div className="text-center py-6 bg-amber-50 rounded-2xl border border-amber-100">
                 <p className="text-sm font-bold text-amber-700">
-                  {language === 'bn' ? 'এই নামে কোনো পরামর্শ পাওয়া যায়নি।' : 'No tips found for this crop name.'}
+                  {t.noTipsFound}
                 </p>
               </div>
             ) : (
@@ -227,14 +179,14 @@ const AgriServicePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <div className="flex items-center gap-2">
                       <Leaf className="w-4 h-4 text-emerald-600" />
-                      <h4 className="text-base font-black text-emerald-900">{tip.cropName}</h4>
+                      <h4 className="text-base font-black text-emerald-900">{language === 'bn' ? tip.cropName.bn : tip.cropName.en}</h4>
                     </div>
                     <div className="flex items-center gap-1 text-emerald-700 bg-white/70 px-2 py-1 rounded-xl border border-emerald-100">
                       <CalendarRange className="w-3.5 h-3.5" />
-                      <span className="text-[11px] font-black uppercase tracking-wider">{tip.season}</span>
+                      <span className="text-[11px] font-black uppercase tracking-wider">{language === 'bn' ? tip.season.bn : tip.season.en}</span>
                     </div>
                   </div>
-                  <p className="text-sm font-semibold text-gray-700 leading-relaxed">{tip.description}</p>
+                  <p className="text-sm font-semibold text-gray-700 leading-relaxed">{language === 'bn' ? tip.description.bn : tip.description.en}</p>
                 </div>
               ))
             )}

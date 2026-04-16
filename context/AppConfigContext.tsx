@@ -58,6 +58,30 @@ export interface PopularProductConfig {
   unit: LocalizedText;
 }
 
+export interface FarmingTipConfig {
+  id: string;
+  enabled: boolean;
+  cropName: LocalizedText;
+  season: LocalizedText;
+  description: LocalizedText;
+}
+
+export interface PestConfig {
+  id: string;
+  enabled: boolean;
+  image: string;
+  diseaseName: LocalizedText;
+  caption: LocalizedText;
+  treatment: LocalizedText;
+}
+
+export interface AgricultureConfig {
+  dailyTip: LocalizedText;
+  dailyInstructions: LocalizedText[];
+  tips: FarmingTipConfig[];
+  pests: PestConfig[];
+}
+
 export interface BloodDonorConfig {
   id: string;
   enabled: boolean;
@@ -106,6 +130,7 @@ export interface AppConfig {
   popularProducts: PopularProductConfig[];
   blood: BloodConfig;
   helpdesk: HelpdeskConfig;
+  agriculture: AgricultureConfig;
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
@@ -533,6 +558,157 @@ const DEFAULT_CONFIG: AppConfig = {
       },
     ],
   },
+  agriculture: {
+    dailyTip: {
+      bn: 'আজ সকালে জমির মাটি হাতে নিয়ে আর্দ্রতা পরীক্ষা করুন। অতিরিক্ত শুকনা হলে হালকা সেচ দিন, তবে পানি জমতে দেবেন না।',
+      en: 'Check the soil moisture in your field this morning. If it is too dry, give a light irrigation, but avoid waterlogging.',
+    },
+    dailyInstructions: [
+      { bn: '১) সকালে বা বিকেলে সেচ দিন, দুপুরের বেশি রোদে সেচ দিলে পানি দ্রুত বাষ্প হয়ে যায়।', en: '1) Irrigate in the morning or afternoon; watering in the midday sun causes rapid evaporation.' },
+      { bn: '২) পাতার রং হলদে হলে নাইট্রোজেনের ঘাটতি থাকতে পারে, সুষম সার প্রয়োগ করুন।', en: '2) Yellowing leaves indicate a possible nitrogen deficiency; apply balanced fertilizer.' },
+      { bn: '৩) জমিতে আগাছা থাকলে ৭-১০ দিনের মধ্যে পরিষ্কার করুন যাতে পুষ্টি অপচয় না হয়।', en: '3) If there are weeds in the field, clear them within 7-10 days to prevent nutrient waste.' },
+      { bn: '৪) পোকা আক্রমণ দেখলে প্রথমে আক্রান্ত পাতা আলাদা করুন, তারপর নিরাপদ কীটনাশক নির্দেশনা মেনে ব্যবহার করুন।', en: '4) Upon seeing pest attacks, remove the affected leaves first, then use safe pesticides following instructions.' },
+      { bn: '৫) আবহাওয়া পূর্বাভাস দেখে সেচ ও স্প্রে পরিকল্পনা করুন, বৃষ্টির ঠিক আগে স্প্রে এড়িয়ে চলুন।', en: '5) Check weather forecasts before planning irrigation and spraying; avoid spraying right before rain.' },
+    ],
+    tips: [
+      {
+        id: 'tip-1',
+        enabled: true,
+        cropName: { bn: 'ধান', en: 'Rice' },
+        season: { bn: 'বর্ষা', en: 'Monsoon' },
+        description: {
+          bn: 'চারার বয়স ২০-২৫ দিন হলে রোপণ করুন এবং জমিতে ২-৩ সেমি পানি ধরে রাখুন।',
+          en: 'Transplant seedlings when 20-25 days old and maintain 2-3 cm standing water in the field.',
+        },
+      },
+      {
+        id: 'tip-2',
+        enabled: true,
+        cropName: { bn: 'গম', en: 'Wheat' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'জমি ভালোভাবে ঝুরঝুরে করে বপন করুন এবং আগাছা ২০ দিনের মধ্যে পরিষ্কার করুন।',
+          en: 'Prepare fine soil before sowing and remove weeds within the first 20 days.',
+        },
+      },
+      {
+        id: 'tip-3',
+        enabled: true,
+        cropName: { bn: 'আলু', en: 'Potato' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'বীজ আলু কাটার পর ছায়ায় শুকিয়ে রোপণ করুন, জমিতে পানি জমতে দেবেন না।',
+          en: 'Dry seed potato pieces in shade before planting and avoid waterlogging.',
+        },
+      },
+      {
+        id: 'tip-4',
+        enabled: true,
+        cropName: { bn: 'টমেটো', en: 'Tomato' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'সুষম সার ব্যবহার করুন এবং গাছে খুঁটি দিন যাতে ফল মাটিতে না লাগে।',
+          en: 'Use balanced fertilizer and support plants with stakes to protect fruits.',
+        },
+      },
+      {
+        id: 'tip-5',
+        enabled: true,
+        cropName: { bn: 'পেঁয়াজ', en: 'Onion' },
+        season: { bn: 'রবি', en: 'Rabi' },
+        description: {
+          bn: 'পাতা হলদে হওয়া শুরু করলে সেচ কমিয়ে দিন, তারপর তুলুন ও শুকান।',
+          en: 'Reduce irrigation when leaves turn yellow, then harvest and cure properly.',
+        },
+      },
+    ],
+    pests: [
+      {
+        id: 'pest-1',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1592982537447-6f2a6a0f4f8f?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'ধানের ব্লাস্ট রোগ', en: 'Rice Blast Disease' },
+        caption: {
+          bn: 'পাতায় ডিম্বাকৃতি দাগ দেখা যায়, দ্রুত ছড়িয়ে ফলন কমিয়ে দেয়।',
+          en: 'Oval spots appear on leaves, spreading quickly and reducing yield.',
+        },
+        treatment: {
+          bn: 'আক্রান্ত পাতা তুলে ফেলুন, পরিমিত নাইট্রোজেন সার দিন এবং অনুমোদিত ছত্রাকনাশক ৭-১০ দিন পরপর প্রয়োগ করুন।',
+          en: 'Remove infected leaves, apply adequate nitrogen, and use approved fungicide every 7-10 days.',
+        },
+      },
+      {
+        id: 'pest-2',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1582281298055-e25b84a30b0b?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'টমেটোর লেট ব্লাইট', en: 'Tomato Late Blight' },
+        caption: {
+          bn: 'পাতা ও ফলে কালচে দাগ হয়, আর্দ্র আবহাওয়ায় সংক্রমণ বেড়ে যায়।',
+          en: 'Dark spots form on leaves and fruits, infections increase in humid weather.',
+        },
+        treatment: {
+          bn: 'গাছের ভেজা পাতা কমাতে সকালে সেচ দিন, আক্রান্ত অংশ সরান এবং তামা-ভিত্তিক ছত্রাকনাশক ব্যবহার করুন।',
+          en: 'Irrigate in the morning to reduce leaf wetness, remove infected parts, and use copper-based fungicide.',
+        },
+      },
+      {
+        id: 'pest-3',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'বেগুনের ফল ও ডগা ছিদ্রকারী পোকা', en: 'Eggplant Fruit & Shoot Borer' },
+        caption: {
+          bn: 'ডগা শুকিয়ে যায় ও ফলে ছিদ্র হয়, বাজারযোগ্যতা কমে যায়।',
+          en: 'Shoots wither and fruits get bored, reducing marketability.',
+        },
+        treatment: {
+          bn: 'আক্রান্ত ডগা ও ফল নিয়মিত অপসারণ করুন, ফেরোমন ফাঁদ বসান এবং প্রয়োজনে নির্দেশনা অনুযায়ী কীটনাশক দিন।',
+          en: 'Regularly remove affected shoots and fruits, set pheromone traps, and use pesticide as instructed if necessary.',
+        },
+      },
+      {
+        id: 'pest-4',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'আলুর আগাম ধসা', en: 'Potato Early Blight' },
+        caption: {
+          bn: 'পাতায় ছোট বাদামি দাগ হয়, রোগ বাড়লে গাছ দ্রুত দুর্বল হয়।',
+          en: 'Small brown spots on leaves, plants weaken quickly as disease progresses.',
+        },
+        treatment: {
+          bn: 'ফসল পর্যায়ক্রমে চাষ করুন, আক্রান্ত পাতা নষ্ট করুন এবং রোগ শুরুতেই সুরক্ষামূলক স্প্রে দিন।',
+          en: 'Practice crop rotation, destroy affected leaves, and apply protective spray at the onset.',
+        },
+      },
+      {
+        id: 'pest-5',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'পাতা মোড়ানো ভাইরাস', en: 'Leaf Curl Virus' },
+        caption: {
+          bn: 'পাতা কুঁকড়ে যায় ও গাছের বৃদ্ধি কমে, ফলন উল্লেখযোগ্যভাবে কমে।',
+          en: 'Leaves curl up and plant growth slows, significantly reducing yield.',
+        },
+        treatment: {
+          bn: 'সাদা মাছি নিয়ন্ত্রণে স্টিকি ট্র্যাপ ব্যবহার করুন, আক্রান্ত গাছ তুলে ফেলুন এবং ভাইরাসমুক্ত চারা ব্যবহার করুন।',
+          en: 'Use sticky traps to control whiteflies, uproot infected plants, and use virus-free seedlings.',
+        },
+      },
+      {
+        id: 'pest-6',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'পাতা ঝলসানো রোগ', en: 'Leaf Blight' },
+        caption: {
+          bn: 'পাতার কিনারা শুকিয়ে বাদামি হয়ে যায়, গাছের স্বাভাবিক বৃদ্ধি ব্যাহত হয়।',
+          en: 'Leaf edges dry up and turn brown, hindering normal plant growth.',
+        },
+        treatment: {
+          bn: 'সুষম সারের সাথে পটাশ বাড়ান, পানি ব্যবস্থাপনা ঠিক রাখুন এবং প্রয়োজন হলে বিশেষজ্ঞের পরামর্শে স্প্রে করুন।',
+          en: 'Increase potash with balanced fertilizer, manage water well, and spray on expert advice if needed.',
+        },
+      },
+    ],
+  },
 };
 
 const ALLOWED_ICON_KEYS: DashboardIconKey[] = ['PhoneCall', 'Sprout', 'ShoppingBag', 'Heart'];
@@ -620,6 +796,10 @@ function coerceAppConfig(raw: unknown): AppConfig {
     isRecord((raw as any).helpdesk) && (raw as any).helpdesk
       ? ((raw as any).helpdesk as HelpdeskConfig)
       : DEFAULT_CONFIG.helpdesk;
+  const agriculture =
+    isRecord((raw as any).agriculture) && (raw as any).agriculture
+      ? ((raw as any).agriculture as AgricultureConfig)
+      : DEFAULT_CONFIG.agriculture;
 
   return {
     schemaVersion: 2,
@@ -630,6 +810,7 @@ function coerceAppConfig(raw: unknown): AppConfig {
     popularProducts,
     blood,
     helpdesk,
+    agriculture,
   };
 }
 

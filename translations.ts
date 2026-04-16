@@ -58,6 +58,16 @@ export const translations = {
     symptoms: "Symptoms",
     solution: "Solution",
     thinking: "Expert is thinking...",
+    dailyTipTitle: "Daily Farming Tip",
+    readMore: "Read More",
+    detailedInstructions: "Detailed Instructions",
+    pestGalleryTitle: "Pest & Disease Identification Gallery",
+    pestGallerySubtitle: "Identify diseases by picture and get quick remedies.",
+    treatment: "Treatment",
+    tipSearchPlaceholder: "Search by crop name (e.g. Rice, Wheat)...",
+    farmingTipsList: "Farming Tips List",
+    searchCropName: "Search by crop name",
+    noTipsFound: "No tips found for this crop name.",
 
     // Navigation
     navHome: "Home",
@@ -252,6 +262,16 @@ export const translations = {
     symptoms: "লক্ষণ",
     solution: "সমাধান",
     thinking: "বিশেষজ্ঞ চিন্তা করছেন...",
+    dailyTipTitle: "আজকের কৃষি পরামর্শ",
+    readMore: "বিস্তারিত পড়ুন",
+    detailedInstructions: "বিস্তারিত কৃষি নির্দেশনা",
+    pestGalleryTitle: "পোকা ও রোগ শনাক্তকরণ গ্যালারি",
+    pestGallerySubtitle: "ছবি দেখে রোগ চিনুন এবং দ্রুত প্রতিকার নিন।",
+    treatment: "প্রতিকার",
+    tipSearchPlaceholder: "যেমন: ধান, গম, আলু",
+    farmingTipsList: "কৃষি পরামর্শ তালিকা",
+    searchCropName: "ফসলের নাম দিয়ে খুঁজুন",
+    noTipsFound: "এই নামে কোনো পরামর্শ পাওয়া যায়নি।",
 
     // Navigation
     navHome: "হোম",

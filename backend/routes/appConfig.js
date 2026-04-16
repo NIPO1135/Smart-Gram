@@ -5,8 +5,8 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get current app config for admin panel
-router.get('/', requireAuth, requireAdmin, async (_req, res) => {
+// Get current app config for admin panel and frontend
+router.get('/', async (_req, res) => {
   try {
     const doc = await AppConfig.findOne({ singletonKey: 'global' }).lean();
     if (!doc) {

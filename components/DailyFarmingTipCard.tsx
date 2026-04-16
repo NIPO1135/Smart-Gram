@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Lightbulb, X } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 
 const DailyFarmingTipCard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t, language } = useLanguage();
+  const { config } = useAppConfig();
 
-  const tipOfTheDay =
-    'আজ সকালে জমির মাটি হাতে নিয়ে আর্দ্রতা পরীক্ষা করুন। অতিরিক্ত শুকনা হলে হালকা সেচ দিন, তবে পানি জমতে দেবেন না।';
+  const tipOfTheDay = language === 'bn' ? config.agriculture.dailyTip.bn : config.agriculture.dailyTip.en;
 
   return (
     <>
@@ -15,7 +18,7 @@ const DailyFarmingTipCard: React.FC = () => {
             <Lightbulb className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <h3 className="text-base sm:text-lg font-black text-green-900">আজকের কৃষি পরামর্শ</h3>
+            <h3 className="text-base sm:text-lg font-black text-green-900">{t.dailyTipTitle}</h3>
             <div className="mt-3 rounded-2xl border border-green-200 bg-white/70 p-4">
               <p className="text-sm sm:text-base font-semibold leading-relaxed text-gray-700">{tipOfTheDay}</p>
             </div>
@@ -24,7 +27,7 @@ const DailyFarmingTipCard: React.FC = () => {
               onClick={() => setIsModalOpen(true)}
               className="mt-4 rounded-xl bg-green-600 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-green-700"
             >
-              Read More
+              {t.readMore}
             </button>
           </div>
         </div>
@@ -34,7 +37,7 @@ const DailyFarmingTipCard: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-3xl bg-white p-5 sm:p-6 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-3">
-              <h4 className="text-lg sm:text-xl font-black text-green-900">বিস্তারিত কৃষি নির্দেশনা</h4>
+              <h4 className="text-lg sm:text-xl font-black text-green-900">{t.detailedInstructions}</h4>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
@@ -46,11 +49,9 @@ const DailyFarmingTipCard: React.FC = () => {
             </div>
 
             <div className="space-y-3 text-sm sm:text-base font-semibold leading-relaxed text-gray-700">
-              <p>১) সকালে বা বিকেলে সেচ দিন, দুপুরের বেশি রোদে সেচ দিলে পানি দ্রুত বাষ্প হয়ে যায়।</p>
-              <p>২) পাতার রং হলদে হলে নাইট্রোজেনের ঘাটতি থাকতে পারে, সুষম সার প্রয়োগ করুন।</p>
-              <p>৩) জমিতে আগাছা থাকলে ৭-১০ দিনের মধ্যে পরিষ্কার করুন যাতে পুষ্টি অপচয় না হয়।</p>
-              <p>৪) পোকা আক্রমণ দেখলে প্রথমে আক্রান্ত পাতা আলাদা করুন, তারপর নিরাপদ কীটনাশক নির্দেশনা মেনে ব্যবহার করুন।</p>
-              <p>৫) আবহাওয়া পূর্বাভাস দেখে সেচ ও স্প্রে পরিকল্পনা করুন, বৃষ্টির ঠিক আগে স্প্রে এড়িয়ে চলুন।</p>
+              {config.agriculture.dailyInstructions.map((inst, index) => (
+                <p key={index}>{language === 'bn' ? inst.bn : inst.en}</p>
+              ))}
             </div>
 
             <div className="mt-6 flex justify-end">
@@ -59,7 +60,7 @@ const DailyFarmingTipCard: React.FC = () => {
                 onClick={() => setIsModalOpen(false)}
                 className="rounded-xl bg-green-600 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-green-700"
               >
-                বন্ধ করুন
+                {t.closeDialog || t.close}
               </button>
             </div>
           </div>

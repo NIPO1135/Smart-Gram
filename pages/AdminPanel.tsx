@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, LayoutGrid, Bell, PhoneCall, ShoppingBag, Droplet, Headphones, Star, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Check, LayoutGrid, Bell, PhoneCall, ShoppingBag, Droplet, Headphones, Star, RotateCcw, Sprout } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { AppConfig, DEFAULT_APP_CONFIG, useAppConfig } from '../context/AppConfigContext';
 
@@ -10,8 +10,9 @@ import AdminVillageMarket from '../components/admin/AdminVillageMarket';
 import AdminBloodBank from '../components/admin/AdminBloodBank';
 import AdminDigitalHelpdesk from '../components/admin/AdminDigitalHelpdesk';
 import AdminPopularProducts from '../components/admin/AdminPopularProducts';
+import AdminAgriculture from '../components/admin/AdminAgriculture';
 
-type AdminView = 'home' | 'notice' | 'cards' | 'emergency' | 'market' | 'blood' | 'helpdesk' | 'popular';
+type AdminView = 'home' | 'notice' | 'cards' | 'emergency' | 'market' | 'blood' | 'helpdesk' | 'popular' | 'agriculture';
 
 const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { language, t } = useLanguage();
@@ -32,6 +33,7 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       noticeTitle: language === 'bn' ? 'নোটিশ বোর্ড' : 'Notice Board',
       helpdeskTitle: language === 'bn' ? 'ডিজিটাল হেল্পডেস্ক' : 'Digital Helpdesk',
       dashboardTitle: language === 'bn' ? 'ড্যাশবোর্ড কার্ডস (হোম)' : 'Dashboard Cards (Home)',
+      agriTitle: language === 'bn' ? 'কৃষি সেবা' : 'Agriculture Service',
       emergencyTitle: language === 'bn' ? 'ইমার্জেন্সি কন্টাক্ট' : 'Emergency Contacts',
       handmadeTitle: language === 'bn' ? 'গ্রামের বাজার (মার্কেট)' : 'Village Market',
       popularTitle: language === 'bn' ? 'পপুলার প্রোডাক্ট' : 'Popular Products',
@@ -101,6 +103,7 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     { id: 'blood', label: labels.bloodTitle, icon: Droplet, color: 'bg-red-600', light: 'bg-red-50' },
     { id: 'helpdesk', label: labels.helpdeskTitle, icon: Headphones, color: 'bg-cyan-500', light: 'bg-cyan-50' },
     { id: 'popular', label: labels.popularTitle, icon: Star, color: 'bg-blue-500', light: 'bg-blue-50' },
+    { id: 'agriculture', label: labels.agriTitle, icon: Sprout, color: 'bg-green-600', light: 'bg-green-50' },
   ] as const;
 
   const sharedProps = { draft, setDraft, language, t, labels, onSave: handleSave, onBack: () => setActiveView('home') };
@@ -181,8 +184,9 @@ const AdminPanel: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         {activeView === 'emergency' && <AdminEmergency {...sharedProps} />}
         {activeView === 'market' && <AdminVillageMarket {...sharedProps} />}
         {activeView === 'blood' && <AdminBloodBank {...sharedProps} />}
-        {activeView === 'helpdesk' && <AdminDigitalHelpdesk {...sharedProps} />}
-        {activeView === 'popular' && <AdminPopularProducts {...sharedProps} />}
+        { activeView === 'helpdesk' && <AdminDigitalHelpdesk {...sharedProps} /> }
+        { activeView === 'popular' && <AdminPopularProducts {...sharedProps} /> }
+        { activeView === 'agriculture' && <AdminAgriculture {...sharedProps} /> }
 
       </div>
     </div>
