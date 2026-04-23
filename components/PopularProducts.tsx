@@ -16,11 +16,12 @@ interface Product {
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { t } = useLanguage();
+  const { config } = useAppConfig();
   
   const handleOrder = () => {
     const message = `${t.whatsappMsg} ${product.name}`;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappNumber = "8801700000000"; 
+    const whatsappNumber = config.marketWhatsapp || "8801700000000"; 
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank');
   };
 

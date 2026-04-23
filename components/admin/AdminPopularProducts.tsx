@@ -87,6 +87,21 @@ const AdminPopularProducts: React.FC<AdminSubViewProps> = ({ draft, setDraft, la
         </div>
       </div>
 
+      <div className="mb-6 bg-gray-50 border border-gray-200 p-5 rounded-2xl">
+        <label className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-2">
+          {language === 'bn' ? 'অর্ডার এর জন্য হোয়াটসঅ্যাপ নম্বর' : 'WhatsApp Number for Orders'}
+        </label>
+        <input 
+          value={draft.marketWhatsapp || ''} 
+          onChange={(e) => setDraft(prev => ({ ...prev, marketWhatsapp: e.target.value }))}
+          placeholder="8801700000000"
+          className="w-full p-3 rounded-xl border border-gray-300 bg-white outline-none text-sm font-bold focus:border-green-500 focus:ring-1 focus:ring-green-500" 
+        />
+        <p className="text-[10px] text-gray-400 mt-2">
+          {language === 'bn' ? 'কান্ট্রি কোড সহ নম্বর দিন (যেমন: 88017...)' : 'Include country code (e.g. 88017...)'}
+        </p>
+      </div>
+
       <div className="space-y-4">
         {draft.popularProducts.map((p, idx) => (
           <div key={p.id} className="border border-blue-100 rounded-[2rem] p-5 bg-blue-50/30 relative group hover:bg-blue-50/50 transition-colors">

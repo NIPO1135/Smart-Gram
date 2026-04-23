@@ -1,6 +1,7 @@
-import React from 'react';
-import { Sprout, Bug, Tractor } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sprout, Bug, Tractor, Leaf } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import AIDiagnosisModal from './AIDiagnosisModal';
 
 type KrishiCard = {
   id: string;
@@ -52,26 +53,30 @@ const KrishiShebaSection: React.FC = () => {
 
   return (
     <section className="w-full rounded-[2rem] bg-white border border-green-100 p-5 sm:p-6 shadow-sm">
-      <div className="mb-5 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-black text-green-900">{language === 'bn' ? 'কৃষি সেবা' : 'Agriculture Services'}</h2>
-        <p className="mt-1 text-sm font-semibold text-gray-600">
-          {language === 'bn' ? 'কৃষকদের জন্য প্রয়োজনীয় গাইডলাইন, সতর্কতা ও আধুনিক কৃষি তথ্য।' : 'Essential guidelines, alerts, and modern farming info for farmers.'}
-        </p>
+      <div className="mb-5 sm:mb-6 flex justify-between items-end">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-black text-green-900">{language === 'bn' ? 'কৃষি সেবা' : 'Agriculture Services'}</h2>
+          <p className="mt-1 text-sm font-semibold text-gray-600">
+            {language === 'bn' ? 'কৃষকদের জন্য প্রয়োজনীয় গাইডলাইন, সতর্কতা ও আধুনিক কৃষি তথ্য।' : 'Essential guidelines, alerts, and modern farming info for farmers.'}
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {krishiCards.map((card) => (
           <article
             key={card.id}
-            className={`rounded-2xl border p-4 sm:p-5 transition-all hover:shadow-md ${card.softClass}`}
+            className={`rounded-2xl border p-4 sm:p-5 transition-all duration-300 hover:shadow-md ${card.softClass}`}
           >
-            <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-white/80 p-2.5 border border-white">
-                <card.Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${card.accentClass}`} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center xl:items-start gap-4 h-full">
+              <div className={`rounded-xl bg-white/80 p-3 sm:p-2.5 xl:p-3 border border-white shadow-sm flex-shrink-0`}>
+                <card.Icon className={`w-6 h-6 sm:w-5 sm:h-5 xl:w-6 xl:h-6 ${card.accentClass}`} />
               </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-gray-800 leading-tight">{language === 'bn' ? card.title.bn : card.title.en}</h3>
-                <p className="mt-2 text-sm font-medium text-gray-700 leading-relaxed">{language === 'bn' ? card.description.bn : card.description.en}</p>
+              <div className="flex-1">
+                <h3 className="text-base sm:text-base xl:text-lg font-black text-gray-800 leading-tight mb-2">
+                  {language === 'bn' ? card.title.bn : card.title.en}
+                </h3>
+                <p className="text-sm font-medium text-gray-700 leading-relaxed opacity-90">{language === 'bn' ? card.description.bn : card.description.en}</p>
               </div>
             </div>
           </article>

@@ -1,15 +1,35 @@
 import React, { createContext, useContext, useState } from 'react';
 
+export interface YouthProgress {
+  learnProgress: number;
+  earnCompleted: boolean;
+  growUnlocked: boolean;
+  completedLessons?: string[];
+  quizScores?: Record<string, number>;
+  streakDays?: number;
+  lastActive?: string;
+}
+
+export interface UserType {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  youthProgress?: YouthProgress;
+}
+
 interface AuthContextType {
   register: (name: string, phone: string, password: string, email: string) => Promise<void>;
   login: (phone: string, password: string) => Promise<void>;
   promoteToAdmin: (pin: string) => Promise<boolean>;
+  updateYouthProgress: (progress: Partial<YouthProgress>) => Promise<void>;
   isLoading: boolean;
   error: string | null;
-  user: any;
+  user: UserType | null;
   token: string | null;
   logout: () => void;
-  updateUser: (updates: Partial<any>) => void;
+  updateUser: (updates: Partial<UserType>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -146,7 +166,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearSession();
   };
 
-  const updateUser = (updates: Partial<any>) => {
+  const updateYouthProgress = async (progress: Partial<YouthProgress>) => {
+    if (!user || !token) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/youth-progress`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(progress)
+      });
+      const data = await response.json();
+      if (response.ok && data.user) {
+        applySession(data.user, token);
+      }
+    } catch (err) {
+      console.error('Failed to update youth progress', err);
+    }
+  };
+
+  const updateUser = (updates: Partial<UserType>) => {
     if (user) {
       const updatedUser = { ...user, ...updates };
       applySession(updatedUser, token ?? null);
@@ -154,7 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ register, login, promoteToAdmin, logout, updateUser, isLoading, error, user, token }}>
+    <AuthContext.Provider value={{ register, login, promoteToAdmin, updateYouthProgress, logout, updateUser, isLoading, error, user, token }}>
       {children}
     </AuthContext.Provider>
   );

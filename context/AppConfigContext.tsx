@@ -131,6 +131,7 @@ export interface AppConfig {
   blood: BloodConfig;
   helpdesk: HelpdeskConfig;
   agriculture: AgricultureConfig;
+  marketWhatsapp?: string;
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
@@ -150,6 +151,7 @@ function getAuthHeader(): string | null {
 
 const DEFAULT_CONFIG: AppConfig = {
   schemaVersion: 2,
+  marketWhatsapp: '8801700000000',
   notices: {
     bn: 'গ্রামের সরকারি হাসপাতালে আগামী শুক্রবার বিনামূল্যে রক্ত পরীক্ষা করা হবে। | নতুন সার ভর্তুকির জন্য ইউনিয়ন পরিষদে যোগাযোগ করুন। | খেলাধুলা ক্লাবের পক্ষ থেকে আগামী রোববার ফুটবল টুনামেন্ট আয়োজন করা হবে।',
     en: 'Free blood checkups at the village government hospital next Friday. | Contact Union Parishad for new fertilizer subsidies. | Football tournament organized by the Sports Club this Sunday.',
@@ -801,6 +803,11 @@ function coerceAppConfig(raw: unknown): AppConfig {
       ? ((raw as any).agriculture as AgricultureConfig)
       : DEFAULT_CONFIG.agriculture;
 
+  const marketWhatsapp =
+    typeof (raw as any).marketWhatsapp === 'string'
+      ? (raw as any).marketWhatsapp
+      : DEFAULT_CONFIG.marketWhatsapp;
+
   return {
     schemaVersion: 2,
     notices,
@@ -811,6 +818,7 @@ function coerceAppConfig(raw: unknown): AppConfig {
     blood,
     helpdesk,
     agriculture,
+    marketWhatsapp,
   };
 }
 

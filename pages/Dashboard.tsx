@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAppConfig } from '../context/AppConfigContext';
 import NoticeBoard from '../components/NoticeBoard';
 import HelpdeskCard from '../components/HelpdeskCard';
+import YouthSection from '../components/YouthSection';
 import PopularProducts from '../components/PopularProducts';
 import RuralAnimation from '../components/RuralAnimation';
 import { 
@@ -107,6 +108,9 @@ const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onView
             </button>
           ))}
         </div>
+
+        {/* SmartGram Youth Section */}
+        <YouthSection onNavigate={(path) => onViewChange?.(path)} />
 
         {/* Feature-Rich Helpdesk Card (Spans Full Width) */}
         <div className="mb-6">

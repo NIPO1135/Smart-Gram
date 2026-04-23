@@ -62,17 +62,18 @@ router.post('/login', async (req, res) => {
 
     // Respond with user info
     const token = createToken(user);
-    res.status(200).json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        email: user.email,
-        role: user.role || 'user',
-      },
-    });
+      res.status(200).json({
+        message: 'Login successful',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          role: user.role || 'user',
+          youthProgress: user.youthProgress || { learnProgress: 0, earnCompleted: false, growUnlocked: false },
+        },
+      });
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ message: 'Server Error' });
@@ -94,19 +95,66 @@ router.post('/promote-admin', requireAuth, async (req, res) => {
     );
 
     const token = createToken(user);
+      return res.status(200).json({
+        message: 'Admin promoted',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          role: user.role,
+          youthProgress: user.youthProgress || { learnProgress: 0, earnCompleted: false, growUnlocked: false },
+        },
+      });
+  } catch (error) {
+    console.error('Promote Admin Error:', error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// Update Youth Progress
+router.put('/youth-progress', requireAuth, async (req, res) => {
+  try {
+    const { learnProgress, earnCompleted, growUnlocked, completedLessons, quizScores, streakDays, lastActive } = req.body;
+    
+    // Create an update object with only defined fields to allow partial updates
+    const updateFields = {};
+    if (learnProgress !== undefined) updateFields['youthProgress.learnProgress'] = learnProgress;
+    if (earnCompleted !== undefined) updateFields['youthProgress.earnCompleted'] = earnCompleted;
+    if (growUnlocked !== undefined) updateFields['youthProgress.growUnlocked'] = growUnlocked;
+    if (completedLessons !== undefined) updateFields['youthProgress.completedLessons'] = completedLessons;
+    if (quizScores !== undefined) updateFields['youthProgress.quizScores'] = quizScores;
+    if (streakDays !== undefined) updateFields['youthProgress.streakDays'] = streakDays;
+    if (lastActive !== undefined) updateFields['youthProgress.lastActive'] = lastActive;
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: 'No progress fields provided' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     return res.status(200).json({
-      message: 'Admin promoted',
-      token,
+      message: 'Youth progress updated',
       user: {
         id: user._id,
         name: user.name,
         phone: user.phone,
         email: user.email,
         role: user.role,
+        youthProgress: user.youthProgress,
       },
     });
   } catch (error) {
-    console.error('Promote Admin Error:', error);
+    console.error('Youth Progress Update Error:', error);
     return res.status(500).json({ message: 'Server Error' });
   }
 });

@@ -89,4 +89,64 @@ router.post('/plant-diagnosis', async (req, res) => {
   }
 });
 
+router.post('/tutor-chat', async (req, res) => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ message: 'AI service key missing' });
+    }
+
+    const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
+    if (messages.length === 0) {
+      return res.status(400).json({ message: 'No chat history provided' });
+    }
+
+    const systemPrompt = "তুমি হলে Smart Gram Youth-এর একজন অত্যন্ত সহায়ক AI Tutor. তোমার কাজ হলো ইউজারদের ডিজিটাল মার্কেটিং, ফ্রিল্যান্সিং, এবং অন্যান্য স্কিল শিখতে সাহায্য করা। তুমি সহজ ও সাবলীল বাংলায় কথা বলবে। তোমার উত্তরগুলো হবে টু-দ্য-পয়েন্ট, স্টেপ-বাই-স্টেপ, এবং খুব বন্ধুসুলভ। খুব বেশি লম্বা উত্তর দেবে না, যাতে ইউজারের বুঝতে সুবিধা হয়।";
+
+    // Format messages for Gemini
+    const contents = messages.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.text }]
+    }));
+
+    // Inject system instructions if supported or just prepend
+    // Current Gemini 1.5 format allows system_instruction natively
+    const payload = {
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: contents,
+      generationConfig: { temperature: 0.7 }
+    };
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const geminiData = await geminiRes.json();
+    if (!geminiRes.ok) {
+      console.error('Gemini API Error:', geminiData);
+      return res.status(502).json({ message: 'AI upstream error' });
+    }
+
+    const rawText =
+      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      geminiData?.candidates?.[0]?.content?.parts?.find((p) => typeof p?.text === 'string')?.text ||
+      'দুঃখিত, আমি ঠিক বুঝতে পারিনি। আপনি কি আরেকটু স্পষ্ট করে বলবেন?';
+
+    return res.status(200).json({
+      result: {
+        text: rawText
+      }
+    });
+
+  } catch (error) {
+    console.error('Tutor Chat Error:', error);
+    return res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 module.exports = router;

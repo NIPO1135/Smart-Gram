@@ -62,13 +62,13 @@ const ShoppingPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           price: p.price,
           unit: language === 'bn' ? p.unit.bn : p.unit.en,
           image: p.image,
-          contact: "8801700000000"
+          contact: config.marketWhatsapp || "8801700000000"
         }));
     return [...backendProducts, ...configProducts];
-  }, [backendProducts, config.handmadeProducts, language]);
+  }, [backendProducts, config.handmadeProducts, config.marketWhatsapp, language]);
 
   const handleWhatsAppOrder = (productName: string, contact: string) => {
-    const whatsappNumber = contact || "8801700000000"; 
+    const whatsappNumber = contact || config.marketWhatsapp || "8801700000000"; 
     const message = encodeURIComponent(`${t.whatsappOrderMsg}${productName}`);
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
   };

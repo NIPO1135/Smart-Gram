@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppConfigProvider } from './context/AppConfigContext';
@@ -15,15 +15,25 @@ import AgriServicePage from './pages/AgriServicePage';
 import ShoppingPage from './pages/ShoppingPage';
 import BloodBankPage from './pages/BloodBankPage';
 import AdminPanel from './pages/AdminPanel';
+import YouthLearnPage from './pages/YouthLearnPage';
 
 type AppTab = 'home' | 'profile';
-type AppView = 'dashboard' | 'emergency' | 'agriculture' | 'shopping' | 'blood' | 'admin';
+type AppView = 'dashboard' | 'emergency' | 'agriculture' | 'shopping' | 'blood' | 'youthLearn' | 'admin';
 
 const Main: React.FC = () => {
   const { user, isLoading } = useAuth();
   const [authView, setAuthView] = useState<'login' | 'register'>('login');
   const [activeTab, setActiveTab] = useState<AppTab>('home');
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const prevUserRef = useRef(user);
+
+  useEffect(() => {
+    if (!prevUserRef.current && user) {
+      setActiveTab('home');
+      setCurrentView('dashboard');
+    }
+    prevUserRef.current = user;
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -54,6 +64,7 @@ const Main: React.FC = () => {
         if (currentView === 'agriculture') return <AgriServicePage onBack={() => setCurrentView('dashboard')} />;
         if (currentView === 'shopping') return <ShoppingPage onBack={() => setCurrentView('dashboard')} />;
         if (currentView === 'blood') return <BloodBankPage onBack={() => setCurrentView('dashboard')} />;
+        if (currentView === 'youthLearn') return <YouthLearnPage onBack={() => setCurrentView('dashboard')} />;
         return <Dashboard onViewChange={(view) => setCurrentView(view as AppView)} />;
       case 'profile':
         return <Profile onOpenAdmin={() => setCurrentView('admin')} />;
