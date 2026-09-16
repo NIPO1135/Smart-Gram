@@ -3,8 +3,8 @@ import { readLocalStorageJson, removeLocalStorageKey, writeLocalStorageJson } fr
 
 export type LocalizedText = { en: string; bn: string };
 
-export type DashboardCardId = 'emergency' | 'agriculture' | 'shopping' | 'blood';
-export type DashboardIconKey = 'PhoneCall' | 'Sprout' | 'ShoppingBag' | 'Heart';
+export type DashboardCardId = 'emergency' | 'agriculture' | 'education' | 'talentHub' | 'shopping' | 'blood';
+export type DashboardIconKey = 'PhoneCall' | 'Sprout' | 'GraduationCap' | 'Award' | 'ShoppingBag' | 'Heart';
 
 export interface DashboardCardConfig {
   id: DashboardCardId;
@@ -45,16 +45,41 @@ export interface HandmadeProductConfig {
   image: string;
 }
 
-export type PopularProductIconKey = 'Milk' | 'Egg';
+export type PopularProductIconKey = 'Milk' | 'Egg' | 'Fish' | 'Meat';
 
 export interface PopularProductConfig {
   id: string;
   enabled: boolean;
   name: LocalizedText;
   iconKey: PopularProductIconKey;
+  image?: string;
   color: string;
   price: string;
   unit: LocalizedText;
+}
+
+export interface FarmingTipConfig {
+  id: string;
+  enabled: boolean;
+  cropName: LocalizedText;
+  season: LocalizedText;
+  description: LocalizedText;
+}
+
+export interface PestConfig {
+  id: string;
+  enabled: boolean;
+  image: string;
+  diseaseName: LocalizedText;
+  caption: LocalizedText;
+  treatment: LocalizedText;
+}
+
+export interface AgricultureConfig {
+  dailyTip: LocalizedText;
+  dailyInstructions: LocalizedText[];
+  tips: FarmingTipConfig[];
+  pests: PestConfig[];
 }
 
 export interface BloodDonorConfig {
@@ -84,6 +109,57 @@ export interface BloodConfig {
   requests: BloodRequestConfig[];
 }
 
+export type HelpdeskServiceId = 'complaint' | 'info' | 'govt' | 'volunteer' | 'links';
+
+export interface HelpdeskSubServiceConfig {
+  id: HelpdeskServiceId;
+  enabled: boolean;
+  titleOverride?: LocalizedText;
+}
+
+export interface HelpdeskConfig {
+  services: HelpdeskSubServiceConfig[];
+}
+
+export type EducationIconKey = 'Laptop' | 'Briefcase' | 'Globe' | 'BookOpen' | 'Monitor';
+
+export interface EducationCourseConfig {
+  id: string;
+  title: { bn: string; en: string };
+  iconKey: EducationIconKey;
+  color: string;
+  link: string;
+}
+
+export interface JobOpeningConfig {
+  id: string;
+  title: { bn: string; en: string };
+  company: { bn: string; en: string };
+  type: string;
+  location: { bn: string; en: string };
+}
+
+export interface EducationConfig {
+  courses: EducationCourseConfig[];
+  jobOpenings: JobOpeningConfig[];
+}
+
+export interface TalentConfig {
+  id: string;
+  name: string;
+  skill: { bn: string; en: string };
+  description: { bn: string; en: string };
+  category: string;
+  location: string;
+  rating: number;
+  image?: string;
+  approved: boolean;
+}
+
+export interface TalentHubConfig {
+  talents: TalentConfig[];
+}
+
 export interface AppConfig {
   schemaVersion: 2;
   notices: LocalizedText;
@@ -92,15 +168,43 @@ export interface AppConfig {
   handmadeProducts: HandmadeProductConfig[];
   popularProducts: PopularProductConfig[];
   blood: BloodConfig;
+  helpdesk: HelpdeskConfig;
+  agriculture: AgricultureConfig;
+  education: EducationConfig;
+  talentHub: TalentHubConfig;
+  marketWhatsapp?: string;
 }
 
 const STORAGE_KEY = 'smart_village_app_config_v1';
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/app-config`;
+const AUTH_SESSION_KEY = 'auth_session';
+
+function getAuthHeader(): string | null {
+  const raw = localStorage.getItem(AUTH_SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed?.token === 'string' ? parsed.token : null;
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_CONFIG: AppConfig = {
   schemaVersion: 2,
+  marketWhatsapp: '8801700000000',
   notices: {
     bn: 'গ্রামের সরকারি হাসপাতালে আগামী শুক্রবার বিনামূল্যে রক্ত পরীক্ষা করা হবে। | নতুন সার ভর্তুকির জন্য ইউনিয়ন পরিষদে যোগাযোগ করুন। | খেলাধুলা ক্লাবের পক্ষ থেকে আগামী রোববার ফুটবল টুনামেন্ট আয়োজন করা হবে।',
     en: 'Free blood checkups at the village government hospital next Friday. | Contact Union Parishad for new fertilizer subsidies. | Football tournament organized by the Sports Club this Sunday.',
+  },
+  helpdesk: {
+    services: [
+      { id: 'complaint', enabled: true },
+      { id: 'info', enabled: true },
+      { id: 'govt', enabled: true },
+      { id: 'volunteer', enabled: true },
+      { id: 'links', enabled: true },
+    ],
   },
   dashboardCards: [
     {
@@ -116,6 +220,20 @@ const DEFAULT_CONFIG: AppConfig = {
       iconKey: 'Sprout',
       color: 'bg-emerald-500',
       lightColor: 'bg-emerald-50',
+    },
+    {
+      id: 'education',
+      enabled: true,
+      iconKey: 'GraduationCap',
+      color: 'bg-indigo-500',
+      lightColor: 'bg-indigo-50',
+    },
+    {
+      id: 'talentHub',
+      enabled: true,
+      iconKey: 'Award',
+      color: 'bg-purple-500',
+      lightColor: 'bg-purple-50',
     },
     {
       id: 'shopping',
@@ -497,9 +615,198 @@ const DEFAULT_CONFIG: AppConfig = {
       },
     ],
   },
+  agriculture: {
+    dailyTip: {
+      bn: 'আজ সকালে জমির মাটি হাতে নিয়ে আর্দ্রতা পরীক্ষা করুন। অতিরিক্ত শুকনা হলে হালকা সেচ দিন, তবে পানি জমতে দেবেন না।',
+      en: 'Check the soil moisture in your field this morning. If it is too dry, give a light irrigation, but avoid waterlogging.',
+    },
+    dailyInstructions: [
+      { bn: '১) সকালে বা বিকেলে সেচ দিন, দুপুরের বেশি রোদে সেচ দিলে পানি দ্রুত বাষ্প হয়ে যায়।', en: '1) Irrigate in the morning or afternoon; watering in the midday sun causes rapid evaporation.' },
+      { bn: '২) পাতার রং হলদে হলে নাইট্রোজেনের ঘাটতি থাকতে পারে, সুষম সার প্রয়োগ করুন।', en: '2) Yellowing leaves indicate a possible nitrogen deficiency; apply balanced fertilizer.' },
+      { bn: '৩) জমিতে আগাছা থাকলে ৭-১০ দিনের মধ্যে পরিষ্কার করুন যাতে পুষ্টি অপচয় না হয়।', en: '3) If there are weeds in the field, clear them within 7-10 days to prevent nutrient waste.' },
+      { bn: '৪) পোকা আক্রমণ দেখলে প্রথমে আক্রান্ত পাতা আলাদা করুন, তারপর নিরাপদ কীটনাশক নির্দেশনা মেনে ব্যবহার করুন।', en: '4) Upon seeing pest attacks, remove the affected leaves first, then use safe pesticides following instructions.' },
+      { bn: '৫) আবহাওয়া পূর্বাভাস দেখে সেচ ও স্প্রে পরিকল্পনা করুন, বৃষ্টির ঠিক আগে স্প্রে এড়িয়ে চলুন।', en: '5) Check weather forecasts before planning irrigation and spraying; avoid spraying right before rain.' },
+    ],
+    tips: [
+      {
+        id: 'tip-1',
+        enabled: true,
+        cropName: { bn: 'ধান', en: 'Rice' },
+        season: { bn: 'বর্ষা', en: 'Monsoon' },
+        description: {
+          bn: 'চারার বয়স ২০-২৫ দিন হলে রোপণ করুন এবং জমিতে ২-৩ সেমি পানি ধরে রাখুন।',
+          en: 'Transplant seedlings when 20-25 days old and maintain 2-3 cm standing water in the field.',
+        },
+      },
+      {
+        id: 'tip-2',
+        enabled: true,
+        cropName: { bn: 'গম', en: 'Wheat' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'জমি ভালোভাবে ঝুরঝুরে করে বপন করুন এবং আগাছা ২০ দিনের মধ্যে পরিষ্কার করুন।',
+          en: 'Prepare fine soil before sowing and remove weeds within the first 20 days.',
+        },
+      },
+      {
+        id: 'tip-3',
+        enabled: true,
+        cropName: { bn: 'আলু', en: 'Potato' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'বীজ আলু কাটার পর ছায়ায় শুকিয়ে রোপণ করুন, জমিতে পানি জমতে দেবেন না।',
+          en: 'Dry seed potato pieces in shade before planting and avoid waterlogging.',
+        },
+      },
+      {
+        id: 'tip-4',
+        enabled: true,
+        cropName: { bn: 'টমেটো', en: 'Tomato' },
+        season: { bn: 'শীত', en: 'Winter' },
+        description: {
+          bn: 'সুষম সার ব্যবহার করুন এবং গাছে খুঁটি দিন যাতে ফল মাটিতে না লাগে।',
+          en: 'Use balanced fertilizer and support plants with stakes to protect fruits.',
+        },
+      },
+      {
+        id: 'tip-5',
+        enabled: true,
+        cropName: { bn: 'পেঁয়াজ', en: 'Onion' },
+        season: { bn: 'রবি', en: 'Rabi' },
+        description: {
+          bn: 'পাতা হলদে হওয়া শুরু করলে সেচ কমিয়ে দিন, তারপর তুলুন ও শুকান।',
+          en: 'Reduce irrigation when leaves turn yellow, then harvest and cure properly.',
+        },
+      },
+    ],
+    pests: [
+      {
+        id: 'pest-1',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1592982537447-6f2a6a0f4f8f?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'ধানের ব্লাস্ট রোগ', en: 'Rice Blast Disease' },
+        caption: {
+          bn: 'পাতায় ডিম্বাকৃতি দাগ দেখা যায়, দ্রুত ছড়িয়ে ফলন কমিয়ে দেয়।',
+          en: 'Oval spots appear on leaves, spreading quickly and reducing yield.',
+        },
+        treatment: {
+          bn: 'আক্রান্ত পাতা তুলে ফেলুন, পরিমিত নাইট্রোজেন সার দিন এবং অনুমোদিত ছত্রাকনাশক ৭-১০ দিন পরপর প্রয়োগ করুন।',
+          en: 'Remove infected leaves, apply adequate nitrogen, and use approved fungicide every 7-10 days.',
+        },
+      },
+      {
+        id: 'pest-2',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1582281298055-e25b84a30b0b?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'টমেটোর লেট ব্লাইট', en: 'Tomato Late Blight' },
+        caption: {
+          bn: 'পাতা ও ফলে কালচে দাগ হয়, আর্দ্র আবহাওয়ায় সংক্রমণ বেড়ে যায়।',
+          en: 'Dark spots form on leaves and fruits, infections increase in humid weather.',
+        },
+        treatment: {
+          bn: 'গাছের ভেজা পাতা কমাতে সকালে সেচ দিন, আক্রান্ত অংশ সরান এবং তামা-ভিত্তিক ছত্রাকনাশক ব্যবহার করুন।',
+          en: 'Irrigate in the morning to reduce leaf wetness, remove infected parts, and use copper-based fungicide.',
+        },
+      },
+      {
+        id: 'pest-3',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'বেগুনের ফল ও ডগা ছিদ্রকারী পোকা', en: 'Eggplant Fruit & Shoot Borer' },
+        caption: {
+          bn: 'ডগা শুকিয়ে যায় ও ফলে ছিদ্র হয়, বাজারযোগ্যতা কমে যায়।',
+          en: 'Shoots wither and fruits get bored, reducing marketability.',
+        },
+        treatment: {
+          bn: 'আক্রান্ত ডগা ও ফল নিয়মিত অপসারণ করুন, ফেরোমন ফাঁদ বসান এবং প্রয়োজনে নির্দেশনা অনুযায়ী কীটনাশক দিন।',
+          en: 'Regularly remove affected shoots and fruits, set pheromone traps, and use pesticide as instructed if necessary.',
+        },
+      },
+      {
+        id: 'pest-4',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'আলুর আগাম ধসা', en: 'Potato Early Blight' },
+        caption: {
+          bn: 'পাতায় ছোট বাদামি দাগ হয়, রোগ বাড়লে গাছ দ্রুত দুর্বল হয়।',
+          en: 'Small brown spots on leaves, plants weaken quickly as disease progresses.',
+        },
+        treatment: {
+          bn: 'ফসল পর্যায়ক্রমে চাষ করুন, আক্রান্ত পাতা নষ্ট করুন এবং রোগ শুরুতেই সুরক্ষামূলক স্প্রে দিন।',
+          en: 'Practice crop rotation, destroy affected leaves, and apply protective spray at the onset.',
+        },
+      },
+      {
+        id: 'pest-5',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'পাতা মোড়ানো ভাইরাস', en: 'Leaf Curl Virus' },
+        caption: {
+          bn: 'পাতা কুঁকড়ে যায় ও গাছের বৃদ্ধি কমে, ফলন উল্লেখযোগ্যভাবে কমে।',
+          en: 'Leaves curl up and plant growth slows, significantly reducing yield.',
+        },
+        treatment: {
+          bn: 'সাদা মাছি নিয়ন্ত্রণে স্টিকি ট্র্যাপ ব্যবহার করুন, আক্রান্ত গাছ তুলে ফেলুন এবং ভাইরাসমুক্ত চারা ব্যবহার করুন।',
+          en: 'Use sticky traps to control whiteflies, uproot infected plants, and use virus-free seedlings.',
+        },
+      },
+      {
+        id: 'pest-6',
+        enabled: true,
+        image: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=900&q=80',
+        diseaseName: { bn: 'পাতা ঝলসানো রোগ', en: 'Leaf Blight' },
+        caption: {
+          bn: 'পাতার কিনারা শুকিয়ে বাদামি হয়ে যায়, গাছের স্বাভাবিক বৃদ্ধি ব্যাহত হয়।',
+          en: 'Leaf edges dry up and turn brown, hindering normal plant growth.',
+        },
+        treatment: {
+          bn: 'সুষম সারের সাথে পটাশ বাড়ান, পানি ব্যবস্থাপনা ঠিক রাখুন এবং প্রয়োজন হলে বিশেষজ্ঞের পরামর্শে স্প্রে করুন।',
+          en: 'Increase potash with balanced fertilizer, manage water well, and spray on expert advice if needed.',
+        },
+      },
+    ],
+  },
+  education: {
+    courses: [],
+    jobOpenings: []
+  },
+  talentHub: {
+    talents: [
+      {
+        id: '1',
+        name: 'Karim Ali',
+        skill: { bn: 'হাতের কাজ', en: 'Handicraft' },
+        description: { bn: 'বাঁশ ও কাঠের কাজে দক্ষ', en: 'Expert in bamboo and woodwork' },
+        category: 'craft',
+        location: 'North Bazaar',
+        rating: 4.8,
+        approved: true
+      },
+      {
+        id: '2',
+        name: 'Fatema Begum',
+        skill: { bn: 'রান্না', en: 'Cooking' },
+        description: { bn: 'ঐতিহ্যবাহী খাবার রান্না', en: 'Traditional food cooking expert' },
+        category: 'cooking',
+        location: 'School Road',
+        rating: 4.9,
+        approved: true
+      },
+      {
+        id: '3',
+        name: 'Rahim Uddin',
+        skill: { bn: 'সঙ্গীত', en: 'Music' },
+        description: { bn: 'বাংলা গান ও বাদ্যযন্ত্র', en: 'Bengali songs and musical instruments' },
+        category: 'music',
+        location: 'Market Area',
+        rating: 4.7,
+        approved: true
+      }
+    ]
+  },
 };
 
-const ALLOWED_ICON_KEYS: DashboardIconKey[] = ['PhoneCall', 'Sprout', 'ShoppingBag', 'Heart'];
+const ALLOWED_ICON_KEYS: DashboardIconKey[] = ['PhoneCall', 'Sprout', 'GraduationCap', 'Award', 'ShoppingBag', 'Heart'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
@@ -544,7 +851,7 @@ function mergeDashboardCards(raw: unknown, defaults: DashboardCardConfig[]): Das
   for (const item of storedArray) {
     if (!isRecord(item)) continue;
     const id = item.id;
-    if (id === 'emergency' || id === 'agriculture' || id === 'shopping' || id === 'blood') {
+    if (id === 'emergency' || id === 'agriculture' || id === 'education' || id === 'talentHub' || id === 'shopping' || id === 'blood') {
       storedById.set(id, item);
       if (!storedOrder.includes(id)) storedOrder.push(id);
     }
@@ -559,28 +866,48 @@ function mergeDashboardCards(raw: unknown, defaults: DashboardCardConfig[]): Das
     .map((id) => coerceDashboardCard(storedById.get(id), defaultById.get(id)!));
 }
 
-function loadConfig(): AppConfig {
-  const stored = readLocalStorageJson<unknown>(STORAGE_KEY);
-  if (!isRecord(stored)) return DEFAULT_CONFIG;
+function coerceAppConfig(raw: unknown): AppConfig {
+  if (!isRecord(raw)) return DEFAULT_CONFIG;
 
-  const notices = coerceLocalizedText(stored.notices, DEFAULT_CONFIG.notices);
-  const dashboardCards = mergeDashboardCards(stored.dashboardCards, DEFAULT_CONFIG.dashboardCards);
+  const notices = coerceLocalizedText(raw.notices, DEFAULT_CONFIG.notices);
+  const dashboardCards = mergeDashboardCards(raw.dashboardCards, DEFAULT_CONFIG.dashboardCards);
   const emergencyCategories =
-    Array.isArray((stored as any).emergencyCategories) && (stored as any).emergencyCategories.length
-      ? ((stored as any).emergencyCategories as EmergencyCategoryConfig[])
+    Array.isArray((raw as any).emergencyCategories) && (raw as any).emergencyCategories.length
+      ? ((raw as any).emergencyCategories as EmergencyCategoryConfig[])
       : DEFAULT_CONFIG.emergencyCategories;
   const handmadeProducts =
-    Array.isArray((stored as any).handmadeProducts) && (stored as any).handmadeProducts.length
-      ? ((stored as any).handmadeProducts as HandmadeProductConfig[])
+    Array.isArray((raw as any).handmadeProducts) && (raw as any).handmadeProducts.length
+      ? ((raw as any).handmadeProducts as HandmadeProductConfig[])
       : DEFAULT_CONFIG.handmadeProducts;
   const popularProducts =
-    Array.isArray((stored as any).popularProducts) && (stored as any).popularProducts.length
-      ? ((stored as any).popularProducts as PopularProductConfig[])
+    Array.isArray((raw as any).popularProducts) && (raw as any).popularProducts.length
+      ? ((raw as any).popularProducts as PopularProductConfig[])
       : DEFAULT_CONFIG.popularProducts;
   const blood =
-    isRecord((stored as any).blood) && (stored as any).blood
-      ? ((stored as any).blood as BloodConfig)
+    isRecord((raw as any).blood) && (raw as any).blood
+      ? ((raw as any).blood as BloodConfig)
       : DEFAULT_CONFIG.blood;
+  const helpdesk =
+    isRecord((raw as any).helpdesk) && (raw as any).helpdesk
+      ? ((raw as any).helpdesk as HelpdeskConfig)
+      : DEFAULT_CONFIG.helpdesk;
+  const agriculture =
+    isRecord((raw as any).agriculture) && (raw as any).agriculture
+      ? ((raw as any).agriculture as AgricultureConfig)
+      : DEFAULT_CONFIG.agriculture;
+  const education =
+    isRecord((raw as any).education) && (raw as any).education
+      ? ((raw as any).education as EducationConfig)
+      : DEFAULT_CONFIG.education;
+  const talentHub =
+    isRecord((raw as any).talentHub) && (raw as any).talentHub
+      ? ((raw as any).talentHub as TalentHubConfig)
+      : DEFAULT_CONFIG.talentHub;
+
+  const marketWhatsapp =
+    typeof (raw as any).marketWhatsapp === 'string'
+      ? (raw as any).marketWhatsapp
+      : DEFAULT_CONFIG.marketWhatsapp;
 
   return {
     schemaVersion: 2,
@@ -590,7 +917,17 @@ function loadConfig(): AppConfig {
     handmadeProducts,
     popularProducts,
     blood,
+    helpdesk,
+    agriculture,
+    education,
+    talentHub,
+    marketWhatsapp,
   };
+}
+
+function loadConfig(): AppConfig {
+  const stored = readLocalStorageJson<unknown>(STORAGE_KEY);
+  return coerceAppConfig(stored);
 }
 
 interface AppConfigContextType {
@@ -603,10 +940,60 @@ const AppConfigContext = createContext<AppConfigContextType | undefined>(undefin
 
 export const AppConfigProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
+  const [hasLoadedRemoteConfig, setHasLoadedRemoteConfig] = useState(false);
+
+  useEffect(() => {
+    const fetchRemoteConfig = async () => {
+      try {
+        const token = getAuthHeader();
+        const response = await fetch(API_BASE_URL, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const data = await response.json();
+        if (response.ok && data?.config) {
+          setConfig(coerceAppConfig(data.config));
+        }
+      } catch {
+        // Keep localStorage/default config when backend is unreachable.
+      } finally {
+        setHasLoadedRemoteConfig(true);
+      }
+    };
+
+    fetchRemoteConfig();
+  }, []);
 
   useEffect(() => {
     writeLocalStorageJson(STORAGE_KEY, config);
-  }, [config]);
+
+    if (!hasLoadedRemoteConfig) return;
+
+    const saveRemoteConfig = async () => {
+      try {
+        const token = getAuthHeader();
+        if (!token) return;
+
+        const response = await fetch(API_BASE_URL, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ config }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ message: response.statusText }));
+          alert(`Backend Save Error: ${response.status} - ${err.message || response.statusText}`);
+        }
+      } catch (err: any) {
+        alert(`Network Error: ${err.message}`);
+        // Silently ignore network errors; localStorage remains source of truth offline.
+      }
+    };
+
+    saveRemoteConfig();
+  }, [config, hasLoadedRemoteConfig]);
 
   const value = useMemo<AppConfigContextType>(() => {
     return {

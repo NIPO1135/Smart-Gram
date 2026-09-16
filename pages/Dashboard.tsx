@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppConfig } from '../context/AppConfigContext';
 import NoticeBoard from '../components/NoticeBoard';
+import AIGramPahara from '../components/AIGramPahara';
 import HelpdeskCard from '../components/HelpdeskCard';
 import PopularProducts from '../components/PopularProducts';
 import RuralAnimation from '../components/RuralAnimation';
@@ -11,7 +12,9 @@ import {
   PhoneCall, 
   Sprout, 
   ShoppingBag, 
-  Heart
+  Heart,
+  GraduationCap,
+  Award
 } from 'lucide-react';
 
 const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onViewChange }) => {
@@ -24,11 +27,15 @@ const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onView
     Sprout,
     ShoppingBag,
     Heart,
+    GraduationCap,
+    Award,
   } as const;
 
   const DEFAULT_TEXT_KEYS = {
     emergency: { titleKey: 'emergency', descKey: 'emergencyDesc' },
     agriculture: { titleKey: 'agriculture', descKey: 'agriDesc' },
+    education: { titleKey: 'education', descKey: 'eduDesc' },
+    talentHub: { titleKey: 'talentHub', descKey: 'talentHubDesc' },
     shopping: { titleKey: 'shopping', descKey: 'shopDesc' },
     blood: { titleKey: 'blood', descKey: 'bloodDesc' },
   } as const;
@@ -89,6 +96,11 @@ const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onView
           <NoticeBoard />
         </div>
 
+        {/* AI Gram Pahara SOS Component */}
+        <div className="mb-8 flex justify-center">
+          <AIGramPahara />
+        </div>
+
         {/* 2x3 Grid for Main Categories */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {gridCategories.map((cat) => (
@@ -107,6 +119,7 @@ const Dashboard: React.FC<{ onViewChange?: (view: string) => void }> = ({ onView
             </button>
           ))}
         </div>
+
 
         {/* Feature-Rich Helpdesk Card (Spans Full Width) */}
         <div className="mb-6">

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppConfig } from '../context/AppConfigContext';
 import { GoogleGenAI } from '@google/genai';
 import { 
   ArrowLeft, 
@@ -22,6 +23,9 @@ import {
 
 const EducationYouthPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
+  const { config } = useAppConfig();
+  const courses = config.education?.courses || [];
+  const jobOpenings = config.education?.jobOpenings || [];
   
   // AI Career Mentor State
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
@@ -65,45 +69,16 @@ const EducationYouthPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  // Updated menu cards logic to match requested labels and icons
-  const skillCourses = [
-    { title: t.eduOnlineCourses, icon: Laptop, color: 'bg-blue-500', link: 'https://youtube.com/results?search_query=free+online+courses+bangladesh' },
-    { title: t.eduJobNews, icon: Briefcase, color: 'bg-indigo-500', link: 'https://www.bdjobs.com/' },
-    { title: t.eduScholarshipsLabel, icon: Globe, color: 'bg-emerald-500', link: 'https://education.gov.bd/' },
-  ];
-
-  const scholarships = [
-    { 
-      title: language === 'bn' ? 'জেলা পরিষদ বৃত্তি ২০২৪' : 'District Council Scholarship 2024', 
-      deadline: language === 'bn' ? '৩০ নভেম্বর ২০২৪' : '30 Nov 2024',
-      desc: language === 'bn' ? 'মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষার্থীদের জন্য' : 'For secondary and higher secondary students'
-    },
-    { 
-      title: language === 'bn' ? 'শিক্ষা মন্ত্রণালয় বিশেষ অনুদান' : 'Education Ministry Special Grant', 
-      deadline: language === 'bn' ? '১৫ ডিসেম্বর ২০২৪' : '15 Dec 2024',
-      desc: language === 'bn' ? 'দরিদ্র ও মেধাবী শিক্ষার্থীদের জন্য' : 'For poor and meritorious students'
-    },
-    { 
-      title: language === 'bn' ? 'প্রাইম ব্যাংক ফাউন্ডেশন বৃত্তি' : 'Prime Bank Foundation Scholarship', 
-      deadline: language === 'bn' ? 'মেয়াদ শেষ' : 'Expired',
-      desc: language === 'bn' ? 'উচ্চ শিক্ষার জন্য' : 'For higher education'
-    },
-  ];
-
-  const jobOpenings = [
-    { 
-      title: language === 'bn' ? 'ডাটা এন্ট্রি অপারেটর' : 'Data Entry Operator', 
-      company: language === 'bn' ? 'ইউনিয়ন তথ্য কেন্দ্র' : 'Union Information Center', 
-      type: 'Part-time',
-      location: language === 'bn' ? 'ইউনিয়ন পরিষদ' : 'Union Parishad'
-    },
-    { 
-      title: language === 'bn' ? 'অফিস সহকারী' : 'Office Assistant', 
-      company: language === 'bn' ? 'স্থানীয় সমবায় ব্যাংক' : 'Local Cooperative Bank', 
-      type: 'Full-time',
-      location: language === 'bn' ? 'গ্রাম' : 'Village'
-    },
-  ];
+  const getIcon = (key: string) => {
+    switch (key) {
+      case 'Laptop': return Laptop;
+      case 'Briefcase': return Briefcase;
+      case 'Globe': return Globe;
+      case 'BookOpen': return BookOpen;
+      case 'Monitor': return Monitor;
+      default: return Laptop;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-sky-50 pb-32 animate-in fade-in duration-500">
@@ -135,68 +110,27 @@ const EducationYouthPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {skillCourses.map((course, idx) => (
-              <a 
-                key={idx} 
-                href={course.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-white p-5 rounded-[2rem] border-2 border-sky-100 shadow-sm hover:shadow-lg hover:border-sky-300 transition-all group flex flex-col items-center justify-center text-center space-y-3 active:scale-95"
-              >
-                <div className={`${course.color} p-5 rounded-2xl text-white group-hover:scale-110 transition-transform shadow-lg`}>
-                  <course.icon className="w-7 h-7" />
-                </div>
-                <span className="text-sm font-bold text-gray-800 leading-tight">{course.title}</span>
-              </a>
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            {courses.map((course, idx) => {
+              const IconComp = getIcon(course.iconKey);
+              return (
+                <a 
+                  key={idx} 
+                  href={course.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-white p-5 rounded-[2rem] border-2 border-sky-100 shadow-sm hover:shadow-lg hover:border-sky-300 transition-all group flex flex-col items-center justify-center text-center space-y-3 active:scale-95"
+                >
+                  <div className={`${course.color} p-5 rounded-2xl text-white group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComp className="w-7 h-7" />
+                  </div>
+                  <span className="text-sm font-bold text-gray-800 leading-tight">{course.title[language as 'en'|'bn'] || course.title.bn}</span>
+                </a>
+              );
+            })}
           </div>
         </section>
 
-        {/* Scholarship Alerts */}
-        <section>
-          <div className="flex items-center space-x-2 mb-3 px-2">
-            <Award className="text-sky-600 w-6 h-6" />
-            <div>
-              <h3 className="text-xl font-extrabold text-gray-800">{t.scholarships}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {language === 'bn' ? 'বিনামূল্যে পড়াশোনার সুযোগ' : 'Free education opportunities'}
-              </p>
-            </div>
-          </div>
-          <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x">
-            {scholarships.map((sch, idx) => (
-              <div key={idx} className="flex-shrink-0 w-72 bg-gradient-to-br from-white to-sky-50 p-6 rounded-[2rem] border-2 border-sky-100 shadow-md snap-start">
-                <div className="flex items-start space-x-3 mb-3">
-                  <div className="bg-sky-100 p-2.5 rounded-xl">
-                    <Award className="w-5 h-5 text-sky-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-extrabold text-gray-800 text-base leading-tight mb-1">{sch.title}</h4>
-                    <p className="text-xs text-gray-600">{sch.desc}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-sky-100">
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">
-                      {language === 'bn' ? 'আবেদনের শেষ তারিখ' : 'Deadline'}
-                    </p>
-                    <span className={`text-sm font-bold ${sch.deadline === (language === 'bn' ? 'মেয়াদ শেষ' : 'Expired') ? 'text-red-600' : 'text-gray-700'}`}>
-                      {sch.deadline}
-                    </span>
-                  </div>
-                  <button className={`px-5 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-all shadow-md ${
-                    sch.deadline === (language === 'bn' ? 'মেয়াদ শেষ' : 'Expired')
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-sky-600 hover:bg-sky-700 text-white'
-                  }`}>
-                    {t.applyNow}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Digital Library */}
         <section>
@@ -322,13 +256,13 @@ const EducationYouthPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
                       <Briefcase className="w-4 h-4 text-sky-500" />
-                      <h4 className="font-extrabold text-gray-800 text-base group-hover:text-sky-600 transition-colors">{job.title}</h4>
+                      <h4 className="font-extrabold text-gray-800 text-base group-hover:text-sky-600 transition-colors">{job.title[language as 'en'|'bn'] || job.title.bn}</h4>
                     </div>
                     <p className="text-sm text-gray-600 font-medium mt-1 mb-1">
-                      {language === 'bn' ? 'সংস্থা:' : 'Company:'} <span className="text-gray-500">{job.company}</span>
+                      {language === 'bn' ? 'সংস্থা:' : 'Company:'} <span className="text-gray-500">{job.company[language as 'en'|'bn'] || job.company.bn}</span>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {language === 'bn' ? 'স্থান:' : 'Location:'} <span className="text-gray-600 font-medium">{job.location}</span>
+                      {language === 'bn' ? 'স্থান:' : 'Location:'} <span className="text-gray-600 font-medium">{job.location[language as 'en'|'bn'] || job.location.bn}</span>
                     </p>
                   </div>
                   <span className={`text-xs font-black px-4 py-2 rounded-full uppercase ${

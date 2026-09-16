@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useAppConfig, TalentConfig } from '../context/AppConfigContext';
 import { 
   ArrowLeft, 
   Award,
@@ -25,20 +26,12 @@ import {
   Trash2
 } from 'lucide-react';
 
-interface Talent {
-  id: string;
-  name: string;
-  skill: string;
-  description: string;
-  category: string;
-  location: string;
-  rating: number;
-  image?: string;
-}
+
 
 const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { config, setConfig } = useAppConfig();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTalent, setNewTalent] = useState({
@@ -60,40 +53,11 @@ const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     { id: 'craft', name: language === 'bn' ? 'কারুশিল্প' : 'Craft', icon: Hammer }
   ];
 
-  const [talents, setTalents] = useState<Talent[]>([
-    {
-      id: '1',
-      name: 'Karim Ali',
-      skill: language === 'bn' ? 'হাতের কাজ' : 'Handicraft',
-      description: language === 'bn' ? 'বাঁশ ও কাঠের কাজে দক্ষ' : 'Expert in bamboo and woodwork',
-      category: 'craft',
-      location: 'North Bazaar',
-      rating: 4.8
-    },
-    {
-      id: '2',
-      name: 'Fatema Begum',
-      skill: language === 'bn' ? 'রান্না' : 'Cooking',
-      description: language === 'bn' ? 'ঐতিহ্যবাহী খাবার রান্না' : 'Traditional food cooking expert',
-      category: 'cooking',
-      location: 'School Road',
-      rating: 4.9
-    },
-    {
-      id: '3',
-      name: 'Rahim Uddin',
-      skill: language === 'bn' ? 'সঙ্গীত' : 'Music',
-      description: language === 'bn' ? 'বাংলা গান ও বাদ্যযন্ত্র' : 'Bengali songs and musical instruments',
-      category: 'music',
-      location: 'Market Area',
-      rating: 4.7
-    }
-  ]);
-
-  const filteredTalents = talents.filter(talent => 
+  const approvedTalents = (config.talentHub?.talents || []).filter(t => t.approved);
+  const filteredTalents = approvedTalents.filter(talent => 
     talent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    talent.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    talent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    talent.skill[language as 'en'|'bn']?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    talent.description[language as 'en'|'bn']?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     talent.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -146,19 +110,53 @@ const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const handleAddTalent = () => {
+  const handleAddTalent = async () => {
     if (newTalent.skill.trim() && newTalent.description.trim() && newTalent.location.trim()) {
-      const talent: Talent = {
+      const talent: TalentConfig = {
         id: Date.now().toString(),
         name: user?.name || 'Anonymous',
-        skill: newTalent.skill,
-        description: newTalent.description,
+        skill: { bn: newTalent.skill, en: newTalent.skill },
+        description: { bn: newTalent.description, en: newTalent.description },
         category: newTalent.category,
         location: newTalent.location,
         rating: 0,
-        image: filePreview || undefined
+        image: filePreview || undefined,
+        approved: false
       };
-      setTalents([talent, ...talents]);
+      
+      try {
+        const token = localStorage.getItem('auth_session');
+        let parsedToken = '';
+        if (token) {
+          const parsed = JSON.parse(token);
+          parsedToken = parsed.token;
+        }
+
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}/api/app-config/talent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(parsedToken ? { Authorization: `Bearer ${parsedToken}` } : {})
+          },
+          body: JSON.stringify({ talent })
+        });
+
+        if (res.ok) {
+          // Temporarily add to local state to show the user it was added
+          // Wait, actually since it's approved=false, it won't show in the public list anyway, 
+          // but we can update the config state so it's in memory.
+          setConfig({
+            ...config,
+            talentHub: {
+              ...config.talentHub,
+              talents: [talent, ...config.talentHub.talents]
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Failed to save talent:", err);
+      }
+      
       setNewTalent({ skill: '', description: '', category: 'music', location: '' });
       setSelectedFile(null);
       setFilePreview(null);
@@ -167,10 +165,11 @@ const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  const handleContactTalent = (talent: Talent) => {
+  const handleContactTalent = (talent: TalentConfig) => {
+    const skillName = talent.skill[language as 'en'|'bn'] || talent.skill.bn;
     const message = language === 'bn' 
-      ? `হ্যালো ${talent.name}, আমি আপনার ${talent.skill} সম্পর্কে জানতে চাই।`
-      : `Hello ${talent.name}, I'm interested in your ${talent.skill} skills.`;
+      ? `হ্যালো ${talent.name}, আমি আপনার ${skillName} সম্পর্কে জানতে চাই।`
+      : `Hello ${talent.name}, I'm interested in your ${skillName} skills.`;
     const whatsappNumber = "8801700000000";
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
@@ -244,7 +243,7 @@ const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       </div>
                       <div>
                         <h3 className="font-black text-gray-800 text-lg">{talent.name}</h3>
-                        <p className="text-orange-600 text-sm font-bold">{talent.skill}</p>
+                        <p className="text-orange-600 text-sm font-bold">{talent.skill[language as 'en'|'bn'] || talent.skill.bn}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-1">
@@ -253,7 +252,7 @@ const TalentHubPage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </div>
                   </div>
 
-                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{talent.description}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{talent.description[language as 'en'|'bn'] || talent.description.bn}</p>
 
                   <div className="flex items-center space-x-2 text-gray-500 mb-4">
                     <MapPin className="w-4 h-4" />

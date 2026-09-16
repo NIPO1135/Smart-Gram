@@ -27,7 +27,7 @@ const RegistrationPage: React.FC<{ onNavigate: (page: 'login' | 'register') => v
     <div className="min-h-[80vh] flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="text-center text-3xl font-extrabold text-green-900">{t.register}</h2>
-        <p className="mt-2 text-center text-sm text-green-600 font-medium">Powered by Ozysa Ltd.</p>
+        <p className="mt-2 text-center text-sm text-green-600 font-medium">Powered by শিল্পকথা</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
